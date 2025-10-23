@@ -3,7 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -54,20 +60,25 @@ export default function Dashboard() {
         <Card>
           <CardHeader>
             <CardTitle>Quick Actions</CardTitle>
-            <CardDescription>Common tasks to manage your inventory</CardDescription>
+            <CardDescription>
+              Common tasks to manage your inventory
+            </CardDescription>
           </CardHeader>
           <CardContent className="flex gap-4">
             <Button onClick={() => navigate("/cars/new")} className="flex-1">
               + Add New Car
             </Button>
-            <Button onClick={() => navigate("/alloys/new")} variant="secondary" className="flex-1">
+            <Button
+              onClick={() => navigate("/alloys/new")}
+              variant="secondary"
+              className="flex-1">
               + Add New Alloy
             </Button>
           </CardContent>
         </Card>
 
         {/* Recent Activity Placeholder */}
-        <Card>
+        {/* <Card>
           <CardHeader>
             <CardTitle>Recent Activity</CardTitle>
             <CardDescription>Latest updates in your inventory</CardDescription>
@@ -94,7 +105,7 @@ export default function Dashboard() {
               </div>
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
       </div>
     </MainLayout>
   );
