@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: wheelmatch_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: wheelmatch_admin
+      MYSQL_USER: wheelmatch_user
+      MYSQL_PASSWORD: wheelmatch_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  app:
+    build: .
+    container_name: wheelmatch_backend
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      PORT: 4000
+      DB_HOST: mysql
+      DB_USER: wheelmatch_user
+      DB_PASSWORD: wheelmatch_pass
+      DB_NAME: wheelmatch_admin
+      DB_PORT: 3306
+      JWT_SECRET: your-super-secret-jwt-key-change-in-production
+      JWT_EXPIRES_IN: 15m
+      NODE_ENV: production
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./src:/app/src
+    command: sh -c "npm run db:migrate && npm run db:seed && npm start"
+
+volumes:
+  mysql_data:
