@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 
 interface ErrorResponse {
   status: 'error';
@@ -15,7 +15,7 @@ export const errorHandler = (
   console.error('Error:', err);
 
   const statusCode = res.statusCode !== 200 ? res.statusCode : 500;
-  
+
   const response: ErrorResponse = {
     status: 'error',
     message: err.message || 'Internal server error',

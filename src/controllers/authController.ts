@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import { body, validationResult } from 'express-validator';
 import User from '../models/User.js';
 import { hashPassword, comparePassword } from '../utils/password.js';
@@ -147,7 +147,7 @@ export const getProfile = async (req: Request, res: Response): Promise<void> => 
     }
 
     const user = await User.findByPk(req.user.userId);
-    
+
     if (!user) {
       sendError(res, 'User not found', 404);
       return;

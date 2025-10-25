@@ -1,5 +1,6 @@
-import { Request, Response, NextFunction } from 'express';
-import { verifyToken, JwtPayload } from '../utils/jwt.js';
+import type { Request, Response, NextFunction } from 'express';
+import { verifyToken } from '../utils/jwt.js';
+import type { JwtPayload } from '../utils/jwt.js';
 import { sendError } from '../utils/response.js';
 
 // Extend Express Request to include user
