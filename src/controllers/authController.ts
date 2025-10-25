@@ -132,7 +132,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 };
 
 // Logout user (client-side token removal)
-export const logout = async (req: Request, res: Response): Promise<void> => {
+export const logout = async (_req: Request, res: Response): Promise<void> => {
   // With JWT, logout is handled on the client side by removing the token
   // This endpoint exists for consistency and can be extended with refresh token blacklisting
   sendSuccess(res, 'Logout successful');

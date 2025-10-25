@@ -1,5 +1,5 @@
 import sequelize from './database.js';
-import User from '../models/User.js';
+import '../models/User.js';
 
 async function migrate() {
   try {
