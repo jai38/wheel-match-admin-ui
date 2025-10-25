@@ -1,5 +1,7 @@
 import sequelize from './database.js';
 import '../models/User.js';
+import '../models/Make.js';
+import '../models/CarModel.js';
 
 async function migrate() {
   try {

@@ -89,11 +89,12 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     const { email, password } = req.body;
 
     // Find user
-    const user = await User.findOne({ where: { email } });
-    if (!user) {
+    const userModel = await User.findOne({ where: { email } });
+    if (!userModel) {
       sendError(res, 'Invalid email or password', 401);
       return;
     }
+    const user = userModel.get({ plain: true });
 
     // Check if user is active
     if (!user.isActive) {

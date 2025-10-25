@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Wheel Match Admin Backend",
-    "description": "API collection for Wheel Match Admin Backend authentication endpoints",
+    "description": "API collection for Wheel Match Admin Backend",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -143,6 +143,161 @@
               "path": ["api", "auth", "logout"]
             },
             "description": "Logout current user (requires authentication)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Makes",
+      "item": [
+        {
+          "name": "Create Make",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Audi\",\n  \"logoUrl\": \"https://example.com/audi-logo.png\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/makes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "makes"]
+            },
+            "description": "Create a new car make (requires authentication)"
+          }
+        },
+        {
+          "name": "List Makes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/makes?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "makes"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Search by name",
+                  "disabled": true
+                },
+                {
+                  "key": "isActive",
+                  "value": "true",
+                  "description": "Filter by active status",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get paginated list of all makes (requires authentication)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Models",
+      "item": [
+        {
+          "name": "Create Model",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"makeId\": 1,\n  \"name\": \"A8\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/models",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "models"]
+            },
+            "description": "Create a new car model for a specific make (requires authentication)"
+          }
+        },
+        {
+          "name": "List Models",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/models?makeId=1&page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "models"],
+              "query": [
+                {
+                  "key": "makeId",
+                  "value": "1",
+                  "description": "Make ID (required)"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Search by name",
+                  "disabled": true
+                },
+                {
+                  "key": "isActive",
+                  "value": "true",
+                  "description": "Filter by active status",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get paginated list of models for a specific make (requires authentication)"
           }
         }
       ]
