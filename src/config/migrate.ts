@@ -2,6 +2,8 @@ import sequelize from './database.js';
 import '../models/User.js';
 import '../models/Make.js';
 import '../models/CarModel.js';
+import '../models/Color.js';
+import '../models/Variant.js';
 
 async function migrate() {
   try {

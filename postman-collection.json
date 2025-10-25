@@ -301,6 +301,161 @@
           }
         }
       ]
+    },
+    {
+      "name": "Admin - Colors",
+      "item": [
+        {
+          "name": "Create Color",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Red\",\n  \"colorCode\": \"#FF0000\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/colors",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "colors"]
+            },
+            "description": "Create a new car color (requires authentication)"
+          }
+        },
+        {
+          "name": "List Colors",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/colors?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "colors"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Search by name",
+                  "disabled": true
+                },
+                {
+                  "key": "isActive",
+                  "value": "true",
+                  "description": "Filter by active status",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get paginated list of all colors (requires authentication)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Variants",
+      "item": [
+        {
+          "name": "Create Variant",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"modelId\": 1,\n  \"name\": \"Base\",\n  \"defaultAlloySize\": 17.0,\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/variants",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "variants"]
+            },
+            "description": "Create a new car variant for a specific model (requires authentication)"
+          }
+        },
+        {
+          "name": "List Variants",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/variants?modelId=1&page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "variants"],
+              "query": [
+                {
+                  "key": "modelId",
+                  "value": "1",
+                  "description": "Model ID (required)"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Search by name",
+                  "disabled": true
+                },
+                {
+                  "key": "isActive",
+                  "value": "true",
+                  "description": "Filter by active status",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get paginated list of variants for a specific model (requires authentication)"
+          }
+        }
+      ]
     }
   ]
 }
