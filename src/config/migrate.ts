@@ -4,6 +4,12 @@ import '../models/Make.js';
 import '../models/CarModel.js';
 import '../models/Color.js';
 import '../models/Variant.js';
+import '../models/Car.js';
+import '../models/AlloyDesign.js';
+import '../models/AlloyPCD.js';
+import '../models/AlloyFinish.js';
+import '../models/AlloySize.js';
+import '../models/Alloy.js';
 
 async function migrate() {
   try {

@@ -32,10 +32,13 @@ export const createVariantValidation = [
 
 export const listVariantsValidation = [
   query('modelId')
-    .notEmpty()
-    .withMessage('Model ID is required')
+    .optional()
     .isInt({ min: 1 })
     .withMessage('Model ID must be a positive integer'),
+  query('makeId')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('Make ID must be a positive integer'),
   query('page')
     .optional()
     .isInt({ min: 1 })
@@ -73,16 +76,29 @@ export const createVariant = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    // Check if variant with same name already exists for this model
+    // Check if variant with same modelId, name, and defaultAlloySize already exists
     const existingVariant = await Variant.findOne({
       where: {
         modelId: modelId,
-        name: name,
+        [Op.or]: [
+          {
+            name: name,
+          },
+          {
+            defaultAlloySize: defaultAlloySize,
+          },
+        ],
       },
     });
 
     if (existingVariant) {
-      sendError(res, 'Variant with this name already exists for this model', 409);
+      if (existingVariant.name === name && existingVariant.defaultAlloySize === parseFloat(defaultAlloySize)) {
+        sendError(res, 'Variant with this name and alloy size already exists for this model', 409);
+      } else if (existingVariant.name === name) {
+        sendError(res, 'Variant with this name already exists for this model', 409);
+      } else {
+        sendError(res, 'Variant with this alloy size already exists for this model', 409);
+      }
       return;
     }
 
@@ -133,7 +149,7 @@ export const createVariant = async (req: Request, res: Response): Promise<void> 
   }
 };
 
-// Get list of all variants for a model
+// Get list of all variants with global search support
 export const listVariants = async (req: Request, res: Response): Promise<void> => {
   try {
     const errors = validationResult(req);
@@ -142,7 +158,8 @@ export const listVariants = async (req: Request, res: Response): Promise<void> =
       return;
     }
 
-    const modelId = parseInt(req.query.modelId as string);
+    const modelId = req.query.modelId ? parseInt(req.query.modelId as string) : undefined;
+    const makeId = req.query.makeId ? parseInt(req.query.makeId as string) : undefined;
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
     const search = (req.query.search as string) || '';
@@ -150,28 +167,56 @@ export const listVariants = async (req: Request, res: Response): Promise<void> =
       ? req.query.isActive === 'true' 
       : undefined;
 
-    // Check if model exists
-    const model = await CarModel.findByPk(modelId);
-    if (!model) {
-      sendError(res, 'Model not found', 404);
-      return;
-    }
-
     const offset = (page - 1) * limit;
 
-    // Build where clause
-    const whereClause: any = {
-      modelId: modelId,
-    };
+    // Build where clause for variant
+    const whereClause: any = {};
     
-    if (search) {
-      whereClause.name = {
-        [Op.like]: `%${search}%`,
-      };
+    if (modelId) {
+      whereClause.modelId = modelId;
     }
 
     if (isActive !== undefined) {
       whereClause.isActive = isActive;
+    }
+
+    // Build include clause with search support
+    const includeClause: any = [
+      {
+        model: CarModel,
+        as: 'model',
+        attributes: ['id', 'name', 'slug'],
+        required: false, // Use left join to allow variants without matching model/make
+        where: makeId ? { makeId } : undefined,
+        include: [
+          {
+            model: Make,
+            as: 'make',
+            attributes: ['id', 'name', 'slug'],
+            required: false,
+          },
+        ],
+      },
+    ];
+
+    // If search is provided, use Sequelize.literal to search across variant, model, and make names
+    if (search) {
+      whereClause[Op.or] = [
+        // Search in variant name
+        { name: { [Op.like]: `%${search}%` } },
+        // Search in model name (via subquery)
+        {
+          '$model.name$': { [Op.like]: `%${search}%` },
+        },
+        // Search in make name (via subquery)
+        {
+          '$model.make.name$': { [Op.like]: `%${search}%` },
+        },
+      ];
+      
+      // Make joins required when searching to ensure we have the data
+      includeClause[0].required = false;
+      includeClause[0].include[0].required = false;
     }
 
     // Fetch variants with pagination
@@ -180,20 +225,7 @@ export const listVariants = async (req: Request, res: Response): Promise<void> =
       limit,
       offset,
       order: [['name', 'ASC']],
-      include: [
-        {
-          model: CarModel,
-          as: 'model',
-          attributes: ['id', 'name', 'slug'],
-          include: [
-            {
-              model: Make,
-              as: 'make',
-              attributes: ['id', 'name', 'slug'],
-            },
-          ],
-        },
-      ],
+      include: includeClause,
     });
 
     sendSuccess(res, 'Variants retrieved successfully', {

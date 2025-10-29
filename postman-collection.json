@@ -419,15 +419,97 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/admin/variants?modelId=1&page=1&limit=10",
+              "raw": "{{baseUrl}}/api/admin/variants?page=1&limit=10",
               "host": ["{{baseUrl}}"],
               "path": ["api", "admin", "variants"],
               "query": [
                 {
                   "key": "modelId",
                   "value": "1",
-                  "description": "Model ID (required)"
+                  "description": "Model ID (optional - filter by model)",
+                  "disabled": true
                 },
+                {
+                  "key": "makeId",
+                  "value": "1",
+                  "description": "Make ID (optional - filter by make)",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Global search by make/model/variant name",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page"
+                },
+                {
+                  "key": "isActive",
+                  "value": "true",
+                  "description": "Filter by active status",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get paginated list of variants with global search support (requires authentication)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Cars",
+      "item": [
+        {
+          "name": "Create Car",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"variantId\": 1,\n  \"colorId\": 1,\n  \"carImage\": \"https://example.com/cars/audi-r8-red.webp\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/cars",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "cars"]
+            },
+            "description": "Create a new car (requires authentication)"
+          }
+        },
+        {
+          "name": "List Cars",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/cars?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "cars"],
+              "query": [
                 {
                   "key": "page",
                   "value": "1",
@@ -441,7 +523,31 @@
                 {
                   "key": "search",
                   "value": "",
-                  "description": "Search by name",
+                  "description": "Search by make/model name",
+                  "disabled": true
+                },
+                {
+                  "key": "makeId",
+                  "value": "",
+                  "description": "Filter by make ID",
+                  "disabled": true
+                },
+                {
+                  "key": "modelId",
+                  "value": "",
+                  "description": "Filter by model ID",
+                  "disabled": true
+                },
+                {
+                  "key": "variantId",
+                  "value": "",
+                  "description": "Filter by variant ID",
+                  "disabled": true
+                },
+                {
+                  "key": "colorId",
+                  "value": "",
+                  "description": "Filter by color ID",
                   "disabled": true
                 },
                 {
@@ -452,7 +558,415 @@
                 }
               ]
             },
-            "description": "Get paginated list of variants for a specific model (requires authentication)"
+            "description": "Get paginated list of cars with filters (requires authentication)"
+          }
+        },
+        {
+          "name": "Get Car",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/cars/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "cars", "1"]
+            },
+            "description": "Get single car by ID (requires authentication)"
+          }
+        },
+        {
+          "name": "Update Car",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"carImage\": \"https://example.com/cars/audi-r8-blue.webp\",\n  \"colorId\": 2,\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/cars/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "cars", "1"]
+            },
+            "description": "Update car details (requires authentication)"
+          }
+        },
+        {
+          "name": "Delete Car",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/cars/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "cars", "1"]
+            },
+            "description": "Soft delete car (sets isActive to false) (requires authentication)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Alloy Master",
+      "item": [
+        {
+          "name": "Create Alloy Design",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Transformer\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/alloy/designs",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "alloy", "designs"]
+            },
+            "description": "Create a new alloy design"
+          }
+        },
+        {
+          "name": "List Alloy Designs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/alloy/designs?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "alloy", "designs"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "search", "value": "", "disabled": true }
+              ]
+            },
+            "description": "Get list of alloy designs"
+          }
+        },
+        {
+          "name": "Create Alloy PCD",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"10x110/114\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/alloy/pcds",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "alloy", "pcds"]
+            },
+            "description": "Create a new alloy PCD"
+          }
+        },
+        {
+          "name": "List Alloy PCDs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/alloy/pcds?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "alloy", "pcds"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            },
+            "description": "Get list of alloy PCDs"
+          }
+        },
+        {
+          "name": "Create Alloy Finish",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"BM\",\n  \"description\": \"Black Machined\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/alloy/finishes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "alloy", "finishes"]
+            },
+            "description": "Create a new alloy finish"
+          }
+        },
+        {
+          "name": "List Alloy Finishes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/alloy/finishes?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "alloy", "finishes"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            },
+            "description": "Get list of alloy finishes"
+          }
+        },
+        {
+          "name": "Create Alloy Size",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"diameter\": 17,\n  \"width\": 8,\n  \"offset\": 35,\n  \"specs\": \"17x8 ET35\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/alloy/sizes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "alloy", "sizes"]
+            },
+            "description": "Create a new alloy size"
+          }
+        },
+        {
+          "name": "List Alloy Sizes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/alloy/sizes?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "alloy", "sizes"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                {
+                  "key": "diameter",
+                  "value": "17",
+                  "description": "Filter by exact diameter",
+                  "disabled": true
+                },
+                {
+                  "key": "minDiameter",
+                  "value": "16",
+                  "description": "Filter by min diameter",
+                  "disabled": true
+                },
+                {
+                  "key": "maxDiameter",
+                  "value": "20",
+                  "description": "Filter by max diameter",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get list of alloy sizes with diameter filtering"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Alloys",
+      "item": [
+        {
+          "name": "Create Alloy",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"designId\": 1,\n  \"pcdId\": 1,\n  \"finishId\": 1,\n  \"sizeId\": 1,\n  \"alloyImages\": [\"https://example.com/alloy1.webp\", \"https://example.com/alloy2.webp\"],\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/alloys",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "alloys"]
+            },
+            "description": "Create a new alloy (auto-generates alloyName)"
+          }
+        },
+        {
+          "name": "List Alloys",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/alloys?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "alloys"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Search by alloy name",
+                  "disabled": true
+                },
+                {
+                  "key": "designId",
+                  "value": "",
+                  "description": "Filter by design",
+                  "disabled": true
+                },
+                {
+                  "key": "pcdId",
+                  "value": "",
+                  "description": "Filter by PCD",
+                  "disabled": true
+                },
+                {
+                  "key": "finishId",
+                  "value": "",
+                  "description": "Filter by finish",
+                  "disabled": true
+                },
+                {
+                  "key": "sizeId",
+                  "value": "",
+                  "description": "Filter by size",
+                  "disabled": true
+                },
+                {
+                  "key": "diameter",
+                  "value": "17",
+                  "description": "Filter by diameter",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get list of alloys with filters"
+          }
+        },
+        {
+          "name": "Get Alloy by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/alloys/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "alloys", "1"]
+            },
+            "description": "Get single alloy with full master data"
+          }
+        },
+        {
+          "name": "Update Alloy",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"alloyImages\": [\"https://example.com/updated1.webp\"],\n  \"isActive\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/alloys/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "alloys", "1"]
+            },
+            "description": "Update alloy (auto-regenerates alloyName if master data changes)"
           }
         }
       ]

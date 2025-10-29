@@ -7,6 +7,9 @@ import makeRoutes from './routes/admin/makeRoutes.js';
 import modelRoutes from './routes/admin/modelRoutes.js';
 import colorRoutes from './routes/admin/colorRoutes.js';
 import variantRoutes from './routes/admin/variantRoutes.js';
+import carRoutes from './routes/admin/carRoutes.js';
+import alloyRoutes from './routes/admin/alloyRoutes.js';
+import alloyMainRoutes from './routes/admin/alloyMainRoutes.js';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler.js';
 
 dotenv.config();
@@ -29,6 +32,9 @@ app.use('/api/admin/makes', makeRoutes);
 app.use('/api/admin/models', modelRoutes);
 app.use('/api/admin/colors', colorRoutes);
 app.use('/api/admin/variants', variantRoutes);
+app.use('/api/admin/cars', carRoutes);
+app.use('/api/admin/alloy', alloyRoutes);
+app.use('/api/admin/alloys', alloyMainRoutes);
 
 // Error handlers (must be last)
 app.use(notFoundHandler);
