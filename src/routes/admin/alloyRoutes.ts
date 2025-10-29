@@ -4,6 +4,7 @@ import { createAlloyPCD, listAlloyPCDs, createAlloyPCDValidation, listAlloyPCDsV
 import { createAlloyFinish, listAlloyFinishes, createAlloyFinishValidation, listAlloyFinishesValidation } from '../../controllers/admin/alloyFinishController.js';
 import { createAlloySize, listAlloySizes, createAlloySizeValidation, listAlloySizesValidation } from '../../controllers/admin/alloySizeController.js';
 import { authenticate } from '../../middlewares/auth.js';
+import { validate } from '../../middlewares/validate.js';
 
 const router = Router();
 
@@ -11,19 +12,19 @@ const router = Router();
 router.use(authenticate);
 
 // Design routes
-router.post('/designs', createAlloyDesignValidation, createAlloyDesign);
-router.get('/designs', listAlloyDesignsValidation, listAlloyDesigns);
+router.post('/designs', validate(createAlloyDesignValidation), createAlloyDesign);
+router.get('/designs', validate(listAlloyDesignsValidation), listAlloyDesigns);
 
 // PCD routes
-router.post('/pcds', createAlloyPCDValidation, createAlloyPCD);
-router.get('/pcds', listAlloyPCDsValidation, listAlloyPCDs);
+router.post('/pcds', validate(createAlloyPCDValidation), createAlloyPCD);
+router.get('/pcds', validate(listAlloyPCDsValidation), listAlloyPCDs);
 
 // Finish routes
-router.post('/finishes', createAlloyFinishValidation, createAlloyFinish);
-router.get('/finishes', listAlloyFinishesValidation, listAlloyFinishes);
+router.post('/finishes', validate(createAlloyFinishValidation), createAlloyFinish);
+router.get('/finishes', validate(listAlloyFinishesValidation), listAlloyFinishes);
 
 // Size routes
-router.post('/sizes', createAlloySizeValidation, createAlloySize);
-router.get('/sizes', listAlloySizesValidation, listAlloySizes);
+router.post('/sizes', validate(createAlloySizeValidation), createAlloySize);
+router.get('/sizes', validate(listAlloySizesValidation), listAlloySizes);
 
 export default router;

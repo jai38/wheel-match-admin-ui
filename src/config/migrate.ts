@@ -29,4 +29,5 @@ async function migrate() {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
 migrate();

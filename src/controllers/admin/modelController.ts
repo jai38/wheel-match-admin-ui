@@ -128,7 +128,6 @@ export const createModel = async (req: Request, res: Response): Promise<void> =>
       201
     );
   } catch (error) {
-    console.error('Create model error:', error);
     sendError(res, 'Failed to create model', 500);
   }
 };
@@ -208,7 +207,6 @@ export const listModels = async (req: Request, res: Response): Promise<void> => 
       },
     });
   } catch (error) {
-    console.error('List models error:', error);
     sendError(res, 'Failed to retrieve models', 500);
   }
 };

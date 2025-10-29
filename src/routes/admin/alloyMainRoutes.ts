@@ -10,6 +10,7 @@ import {
   updateAlloyValidation,
 } from '../../controllers/admin/alloyController.js';
 import { authenticate } from '../../middlewares/auth.js';
+import { validate } from '../../middlewares/validate.js';
 
 const router = Router();
 
@@ -17,9 +18,9 @@ const router = Router();
 router.use(authenticate);
 
 // Alloy CRUD routes
-router.post('/', createAlloyValidation, createAlloy);
-router.get('/', listAlloysValidation, listAlloys);
-router.get('/:id', getAlloyValidation, getAlloy);
-router.put('/:id', updateAlloyValidation, updateAlloy);
+router.post('/', validate(createAlloyValidation), createAlloy);
+router.get('/', validate(listAlloysValidation), listAlloys);
+router.get('/:id', validate(getAlloyValidation), getAlloy);
+router.put('/:id', validate(updateAlloyValidation), updateAlloy);
 
 export default router;

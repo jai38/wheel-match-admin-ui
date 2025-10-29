@@ -72,7 +72,6 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       201
     );
   } catch (error) {
-    console.error('Register error:', error);
     sendError(res, 'Failed to register user', 500);
   }
 };
@@ -95,7 +94,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
     const user = userModel.get({ plain: true });
-
     // Check if user is active
     if (!user.isActive) {
       sendError(res, 'Account is inactive', 403);
@@ -127,7 +125,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       },
     });
   } catch (error) {
-    console.error('Login error:', error);
     sendError(res, 'Failed to login', 500);
   }
 };
@@ -164,7 +161,6 @@ export const getProfile = async (req: Request, res: Response): Promise<void> => 
       updatedAt: user.updatedAt,
     });
   } catch (error) {
-    console.error('Get profile error:', error);
     sendError(res, 'Failed to retrieve profile', 500);
   }
 };

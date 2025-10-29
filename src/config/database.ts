@@ -1,21 +1,25 @@
 import { Sequelize } from 'sequelize';
-import dotenv from 'dotenv';
-
-dotenv.config();
+import { env } from '../utils/env.js';
+import { DATABASE } from './constants.js';
 
 const sequelize = new Sequelize({
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT || '3306'),
-  database: process.env.DB_NAME || 'wheelmatch_admin',
-  username: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
+  host: env.DB_HOST,
+  port: env.DB_PORT,
+  database: env.DB_NAME,
+  username: env.DB_USER,
+  password: env.DB_PASSWORD,
   dialect: 'mysql',
-  logging: process.env.NODE_ENV === 'development' ? console.log : false,
+  logging: env.NODE_ENV === 'development' ? console.log : false,
   pool: {
-    max: 5,
-    min: 0,
-    acquire: 30000,
-    idle: 10000,
+    max: DATABASE.POOL.MAX,
+    min: DATABASE.POOL.MIN,
+    acquire: DATABASE.POOL.ACQUIRE,
+    idle: DATABASE.POOL.IDLE,
+  },
+  define: {
+    timestamps: true,
+    underscored: false,
+    freezeTableName: true,
   },
 });
 

@@ -14,6 +14,7 @@ const generateAlloyName = (specs: string, design: string, pcd: string, finish: s
 };
 
 // Helper function to format alloy response
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const formatAlloyResponse = (alloy: any) => ({
   id: alloy.id,
   designId: alloy.designId,
@@ -147,7 +148,6 @@ export const createAlloy = async (req: Request, res: Response): Promise<void> =>
 
     sendSuccess(res, 'Alloy created successfully', formatAlloyResponse(createdAlloy), 201);
   } catch (error) {
-    console.error('Create alloy error:', error);
     sendError(res, 'Failed to create alloy', 500);
   }
 };
@@ -173,6 +173,7 @@ export const listAlloys = async (req: Request, res: Response): Promise<void> => 
     const offset = (page - 1) * limit;
 
     // Build where clause
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const whereClause: any = {};
     
     if (search) {
@@ -185,6 +186,7 @@ export const listAlloys = async (req: Request, res: Response): Promise<void> => 
     if (isActive !== undefined) whereClause.isActive = isActive;
 
     // Build include clause with diameter filter
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const includeClause: any = [
       { model: AlloyDesign, as: 'design', attributes: ['id', 'name'] },
       { model: AlloyPCD, as: 'pcd', attributes: ['id', 'name'] },
@@ -211,7 +213,6 @@ export const listAlloys = async (req: Request, res: Response): Promise<void> => 
       pagination: { total: count, page, limit, totalPages: Math.ceil(count / limit) },
     });
   } catch (error) {
-    console.error('List alloys error:', error);
     sendError(res, 'Failed to retrieve alloys', 500);
   }
 };
@@ -243,7 +244,6 @@ export const getAlloy = async (req: Request, res: Response): Promise<void> => {
 
     sendSuccess(res, 'Alloy retrieved successfully', formatAlloyResponse(alloy));
   } catch (error) {
-    console.error('Get alloy error:', error);
     sendError(res, 'Failed to retrieve alloy', 500);
   }
 };
@@ -350,7 +350,6 @@ export const updateAlloy = async (req: Request, res: Response): Promise<void> =>
 
     sendSuccess(res, 'Alloy updated successfully', formatAlloyResponse(updatedAlloy));
   } catch (error) {
-    console.error('Update alloy error:', error);
     sendError(res, 'Failed to update alloy', 500);
   }
 };

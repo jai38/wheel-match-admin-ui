@@ -170,7 +170,7 @@
               "raw": "{\n  \"name\": \"Audi\",\n  \"logoUrl\": \"https://example.com/audi-logo.png\",\n  \"isActive\": true\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/admin/makes",
+              "raw": "{{baseUrl}}/api/admin/car/makes",
               "host": ["{{baseUrl}}"],
               "path": ["api", "admin", "makes"]
             },
@@ -189,7 +189,7 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/admin/makes?page=1&limit=10",
+              "raw": "{{baseUrl}}/api/admin/car/makes?page=1&limit=10",
               "host": ["{{baseUrl}}"],
               "path": ["api", "admin", "makes"],
               "query": [
@@ -245,7 +245,7 @@
               "raw": "{\n  \"makeId\": 1,\n  \"name\": \"A8\",\n  \"isActive\": true\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/admin/models",
+              "raw": "{{baseUrl}}/api/admin/car/models",
               "host": ["{{baseUrl}}"],
               "path": ["api", "admin", "models"]
             },
@@ -264,7 +264,7 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/admin/models?makeId=1&page=1&limit=10",
+              "raw": "{{baseUrl}}/api/admin/car/models?makeId=1&page=1&limit=10",
               "host": ["{{baseUrl}}"],
               "path": ["api", "admin", "models"],
               "query": [
@@ -325,7 +325,7 @@
               "raw": "{\n  \"name\": \"Red\",\n  \"colorCode\": \"#FF0000\",\n  \"isActive\": true\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/admin/colors",
+              "raw": "{{baseUrl}}/api/admin/car/colors",
               "host": ["{{baseUrl}}"],
               "path": ["api", "admin", "colors"]
             },
@@ -344,7 +344,7 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/admin/colors?page=1&limit=10",
+              "raw": "{{baseUrl}}/api/admin/car/colors?page=1&limit=10",
               "host": ["{{baseUrl}}"],
               "path": ["api", "admin", "colors"],
               "query": [
@@ -400,7 +400,7 @@
               "raw": "{\n  \"modelId\": 1,\n  \"name\": \"Base\",\n  \"defaultAlloySize\": 17.0,\n  \"isActive\": true\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/admin/variants",
+              "raw": "{{baseUrl}}/api/admin/car/variants",
               "host": ["{{baseUrl}}"],
               "path": ["api", "admin", "variants"]
             },
@@ -419,7 +419,7 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/admin/variants?page=1&limit=10",
+              "raw": "{{baseUrl}}/api/admin/car/variants?page=1&limit=10",
               "host": ["{{baseUrl}}"],
               "path": ["api", "admin", "variants"],
               "query": [
@@ -973,3 +973,4 @@
     }
   ]
 }
+

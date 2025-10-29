@@ -91,7 +91,6 @@ export const createColor = async (req: Request, res: Response): Promise<void> =>
       201
     );
   } catch (error) {
-    console.error('Create color error:', error);
     sendError(res, 'Failed to create color', 500);
   }
 };
@@ -152,7 +151,6 @@ export const listColors = async (req: Request, res: Response): Promise<void> => 
       },
     });
   } catch (error) {
-    console.error('List colors error:', error);
     sendError(res, 'Failed to retrieve colors', 500);
   }
 };

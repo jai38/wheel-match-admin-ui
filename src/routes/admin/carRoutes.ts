@@ -11,6 +11,7 @@ import {
   updateCarValidation,
 } from '../../controllers/admin/carController.js';
 import { authenticate } from '../../middlewares/auth.js';
+import { validate } from '../../middlewares/validate.js';
 
 const router = Router();
 
@@ -18,10 +19,10 @@ const router = Router();
 router.use(authenticate);
 
 // Car routes
-router.post('/', createCarValidation, createCar);
-router.get('/', listCarsValidation, listCars);
-router.get('/:id', getCarValidation, getCar);
-router.put('/:id', updateCarValidation, updateCar);
-router.delete('/:id', getCarValidation, deleteCar);
+router.post('/', validate(createCarValidation), createCar);
+router.get('/', validate(listCarsValidation), listCars);
+router.get('/:id', validate(getCarValidation), getCar);
+router.put('/:id', validate(updateCarValidation), updateCar);
+router.delete('/:id', validate(getCarValidation), deleteCar);
 
 export default router;

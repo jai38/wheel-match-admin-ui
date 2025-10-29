@@ -144,7 +144,6 @@ export const createVariant = async (req: Request, res: Response): Promise<void> 
       201
     );
   } catch (error) {
-    console.error('Create variant error:', error);
     sendError(res, 'Failed to create variant', 500);
   }
 };
@@ -247,7 +246,6 @@ export const listVariants = async (req: Request, res: Response): Promise<void> =
       },
     });
   } catch (error) {
-    console.error('List variants error:', error);
     sendError(res, 'Failed to retrieve variants', 500);
   }
 };

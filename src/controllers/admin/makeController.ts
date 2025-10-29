@@ -105,7 +105,6 @@ export const createMake = async (req: Request, res: Response): Promise<void> => 
       201
     );
   } catch (error) {
-    console.error('Create make error:', error);
     sendError(res, 'Failed to create make', 500);
   }
 };
@@ -128,7 +127,6 @@ export const listMakes = async (req: Request, res: Response): Promise<void> => {
 
     const offset = (page - 1) * limit;
 
-    console.log('List makes request:', { page, limit, search, isActive, offset });
 
     // Build where clause
     const whereClause: any = {};
@@ -144,14 +142,12 @@ export const listMakes = async (req: Request, res: Response): Promise<void> => {
     }
 
     // Fetch makes with pagination
-    console.log('Where clause:', JSON.stringify(whereClause));
     const { count, rows: makes } = await Make.findAndCountAll({
       where: whereClause,
       limit,
       offset,
       order: [['name', 'ASC']],
     });
-    console.log('Query result:', { count, makesLength: makes.length });
 
     sendSuccess(res, 'Makes retrieved successfully', {
       makes: makes.map(make => ({
@@ -171,7 +167,6 @@ export const listMakes = async (req: Request, res: Response): Promise<void> => {
       },
     });
   } catch (error) {
-    console.error('List makes error:', error);
     sendError(res, 'Failed to retrieve makes', 500);
   }
 };
