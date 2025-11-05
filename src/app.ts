@@ -46,6 +46,7 @@ const API_V1 = '/api/v1';
 app.use('/api/auth', authRoutes);
 
 // Admin routes with v1 prefix
+app.use(`${API_V1}/auth`, authRoutes);
 app.use(`${API_V1}/admin/car`, carMasterRoutes); // Car master data (makes, models, colors, variants)
 app.use(`${API_V1}/admin/cars`, carRoutes); // Main car entity
 app.use(`${API_V1}/admin/alloy`, alloyRoutes); // Alloy master data (designs, pcds, finishes, sizes)

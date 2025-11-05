@@ -121,8 +121,8 @@ export const listMakes = async (req: Request, res: Response): Promise<void> => {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
     const search = (req.query.search as string) || '';
-    const isActive = req.query.isActive !== undefined 
-      ? req.query.isActive === 'true' 
+    const isActive = req.query.isActive !== undefined
+      ? req.query.isActive === 'true'
       : undefined;
 
     const offset = (page - 1) * limit;
@@ -130,7 +130,7 @@ export const listMakes = async (req: Request, res: Response): Promise<void> => {
 
     // Build where clause
     const whereClause: any = {};
-    
+
     if (search) {
       whereClause.name = {
         [Op.like]: `%${search}%`,
@@ -150,7 +150,7 @@ export const listMakes = async (req: Request, res: Response): Promise<void> => {
     });
 
     sendSuccess(res, 'Makes retrieved successfully', {
-      makes: makes.map(make => ({
+      items: makes.map(make => ({
         id: make.id,
         name: make.name,
         slug: make.slug,

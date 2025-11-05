@@ -80,11 +80,11 @@ export const listAlloySizes = async (req: Request, res: Response): Promise<void>
     const offset = (page - 1) * limit;
 
     const whereClause: any = {};
-    
+
     if (search) {
       whereClause.specs = { [Op.like]: `%${search}%` };
     }
-    
+
     if (diameter !== undefined) {
       whereClause.diameter = diameter;
     } else if (minDiameter !== undefined || maxDiameter !== undefined) {
@@ -92,7 +92,7 @@ export const listAlloySizes = async (req: Request, res: Response): Promise<void>
       if (minDiameter !== undefined) whereClause.diameter[Op.gte] = minDiameter;
       if (maxDiameter !== undefined) whereClause.diameter[Op.lte] = maxDiameter;
     }
-    
+
     if (isActive !== undefined) {
       whereClause.isActive = isActive;
     }
@@ -105,7 +105,7 @@ export const listAlloySizes = async (req: Request, res: Response): Promise<void>
     });
 
     sendSuccess(res, 'Alloy sizes retrieved successfully', {
-      sizes: sizes.map(size => ({
+      items: sizes.map(size => ({
         id: size.id,
         diameter: parseFloat(size.diameter.toString()),
         width: parseFloat(size.width.toString()),

@@ -145,8 +145,8 @@ export const listModels = async (req: Request, res: Response): Promise<void> => 
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
     const search = (req.query.search as string) || '';
-    const isActive = req.query.isActive !== undefined 
-      ? req.query.isActive === 'true' 
+    const isActive = req.query.isActive !== undefined
+      ? req.query.isActive === 'true'
       : undefined;
 
     // Check if make exists
@@ -162,7 +162,7 @@ export const listModels = async (req: Request, res: Response): Promise<void> => 
     const whereClause: any = {
       makeId: makeId,
     };
-    
+
     if (search) {
       whereClause.name = {
         [Op.like]: `%${search}%`,
@@ -189,7 +189,7 @@ export const listModels = async (req: Request, res: Response): Promise<void> => 
     });
 
     sendSuccess(res, 'Models retrieved successfully', {
-      models: models.map(model => ({
+      items: models.map(model => ({
         id: model.id,
         makeId: model.makeId,
         name: model.name,

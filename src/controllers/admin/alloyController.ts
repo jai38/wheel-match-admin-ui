@@ -44,7 +44,7 @@ export const createAlloyValidation = [
   body('pcdId').notEmpty().withMessage('PCD ID is required').isInt({ min: 1 }).withMessage('PCD ID must be a positive integer'),
   body('finishId').notEmpty().withMessage('Finish ID is required').isInt({ min: 1 }).withMessage('Finish ID must be a positive integer'),
   body('sizeId').notEmpty().withMessage('Size ID is required').isInt({ min: 1 }).withMessage('Size ID must be a positive integer'),
-  body('alloyImages').isArray({ min: 1 }).withMessage('At least one image is required'),
+  body('alloyImages').optional().isArray({ min: 0 }).withMessage('At least one image is required'),
   body('alloyImages.*').isURL().withMessage('Each image must be a valid URL'),
   body('isActive').optional().isBoolean().withMessage('isActive must be a boolean'),
 ];
@@ -55,7 +55,7 @@ export const updateAlloyValidation = [
   body('pcdId').optional().isInt({ min: 1 }).withMessage('PCD ID must be a positive integer'),
   body('finishId').optional().isInt({ min: 1 }).withMessage('Finish ID must be a positive integer'),
   body('sizeId').optional().isInt({ min: 1 }).withMessage('Size ID must be a positive integer'),
-  body('alloyImages').optional().isArray({ min: 1 }).withMessage('At least one image is required'),
+  body('alloyImages').optional().isArray({ min: 0 }).withMessage('At least one image is required'),
   body('alloyImages.*').optional().isURL().withMessage('Each image must be a valid URL'),
   body('isActive').optional().isBoolean().withMessage('isActive must be a boolean'),
 ];
@@ -85,7 +85,10 @@ export const createAlloy = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
-    const { designId, pcdId, finishId, sizeId, alloyImages, isActive } = req.body;
+    let { designId, pcdId, finishId, sizeId, alloyImages, isActive } = req.body;
+    if (!alloyImages || alloyImages.length === 0) {
+      alloyImages = ['https://via.placeholder.com/400x300?text=No+Image'];
+    }
 
     // Check if all master data exists
     const [design, pcd, finish, size] = await Promise.all([
@@ -175,7 +178,7 @@ export const listAlloys = async (req: Request, res: Response): Promise<void> => 
     // Build where clause
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const whereClause: any = {};
-    
+
     if (search) {
       whereClause.alloyName = { [Op.like]: `%${search}%` };
     }
@@ -323,7 +326,7 @@ export const updateAlloy = async (req: Request, res: Response): Promise<void> =>
         finishId !== undefined ? AlloyFinish.findByPk(finishId) : AlloyFinish.findByPk(alloy.finishId),
         sizeId !== undefined ? AlloySize.findByPk(sizeId) : AlloySize.findByPk(alloy.sizeId),
       ]);
-      
+
       newAlloyName = generateAlloyName(size!.specs, design!.name, pcd!.name, finish!.name);
     }
 

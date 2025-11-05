@@ -86,7 +86,7 @@ export const listAlloyFinishes = async (req: Request, res: Response): Promise<vo
     });
 
     sendSuccess(res, 'Alloy finishes retrieved successfully', {
-      finishes: finishes.map(finish => ({
+      items: finishes.map(finish => ({
         id: finish.id,
         name: finish.name,
         description: finish.description,

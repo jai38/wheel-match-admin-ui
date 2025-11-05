@@ -162,15 +162,15 @@ export const listVariants = async (req: Request, res: Response): Promise<void> =
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
     const search = (req.query.search as string) || '';
-    const isActive = req.query.isActive !== undefined 
-      ? req.query.isActive === 'true' 
+    const isActive = req.query.isActive !== undefined
+      ? req.query.isActive === 'true'
       : undefined;
 
     const offset = (page - 1) * limit;
 
     // Build where clause for variant
     const whereClause: any = {};
-    
+
     if (modelId) {
       whereClause.modelId = modelId;
     }
@@ -212,7 +212,7 @@ export const listVariants = async (req: Request, res: Response): Promise<void> =
           '$model.make.name$': { [Op.like]: `%${search}%` },
         },
       ];
-      
+
       // Make joins required when searching to ensure we have the data
       includeClause[0].required = false;
       includeClause[0].include[0].required = false;
@@ -228,7 +228,7 @@ export const listVariants = async (req: Request, res: Response): Promise<void> =
     });
 
     sendSuccess(res, 'Variants retrieved successfully', {
-      variants: variants.map(variant => ({
+      items: variants.map(variant => ({
         id: variant.id,
         modelId: variant.modelId,
         name: variant.name,

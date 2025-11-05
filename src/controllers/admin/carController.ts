@@ -21,9 +21,8 @@ export const createCarValidation = [
     .isInt({ min: 1 })
     .withMessage('Color ID must be a positive integer'),
   body('carImage')
+    .optional()
     .trim()
-    .notEmpty()
-    .withMessage('Car image is required')
     .isLength({ max: 500 })
     .withMessage('Car image URL must not exceed 500 characters'),
   body('isActive')
@@ -137,7 +136,10 @@ export const createCar = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const { variantId, colorId, carImage, isActive } = req.body;
+    let { variantId, colorId, carImage, isActive } = req.body;
+    if (!carImage) {
+      carImage = 'https://via.placeholder.com/400x300?text=No+Image';
+    }
 
     // Check if variant exists
     const variant = await Variant.findByPk(variantId);
@@ -232,15 +234,15 @@ export const listCars = async (req: Request, res: Response): Promise<void> => {
     const modelId = req.query.modelId ? parseInt(req.query.modelId as string) : undefined;
     const variantId = req.query.variantId ? parseInt(req.query.variantId as string) : undefined;
     const colorId = req.query.colorId ? parseInt(req.query.colorId as string) : undefined;
-    const isActive = req.query.isActive !== undefined 
-      ? req.query.isActive === 'true' 
+    const isActive = req.query.isActive !== undefined
+      ? req.query.isActive === 'true'
       : undefined;
 
     const offset = (page - 1) * limit;
 
     // Build where clause for car
     const whereClause: any = {};
-    
+
     if (variantId) {
       whereClause.variantId = variantId;
     }

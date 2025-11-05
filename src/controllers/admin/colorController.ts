@@ -107,15 +107,15 @@ export const listColors = async (req: Request, res: Response): Promise<void> => 
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
     const search = (req.query.search as string) || '';
-    const isActive = req.query.isActive !== undefined 
-      ? req.query.isActive === 'true' 
+    const isActive = req.query.isActive !== undefined
+      ? req.query.isActive === 'true'
       : undefined;
 
     const offset = (page - 1) * limit;
 
     // Build where clause
     const whereClause: any = {};
-    
+
     if (search) {
       whereClause.name = {
         [Op.like]: `%${search}%`,
@@ -135,7 +135,7 @@ export const listColors = async (req: Request, res: Response): Promise<void> => 
     });
 
     sendSuccess(res, 'Colors retrieved successfully', {
-      colors: colors.map(color => ({
+      items: colors.map(color => ({
         id: color.id,
         name: color.name,
         colorCode: color.colorCode,

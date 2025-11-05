@@ -95,15 +95,15 @@ export const listAlloyDesigns = async (req: Request, res: Response): Promise<voi
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
     const search = (req.query.search as string) || '';
-    const isActive = req.query.isActive !== undefined 
-      ? req.query.isActive === 'true' 
+    const isActive = req.query.isActive !== undefined
+      ? req.query.isActive === 'true'
       : undefined;
 
     const offset = (page - 1) * limit;
 
     // Build where clause
     const whereClause: any = {};
-    
+
     if (search) {
       whereClause.name = {
         [Op.like]: `%${search}%`,
@@ -123,7 +123,7 @@ export const listAlloyDesigns = async (req: Request, res: Response): Promise<voi
     });
 
     sendSuccess(res, 'Alloy designs retrieved successfully', {
-      designs: designs.map(design => ({
+      items: designs.map(design => ({
         id: design.id,
         name: design.name,
         isActive: design.isActive,
