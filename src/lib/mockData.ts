@@ -32,3 +32,15 @@ export const mockAlloys: Alloy[] = [
   { id: "4", name: "Silver Sport 17\"", size: "17\"", compatibleCars: 20, enabled: true, pcd: "5x100", offset: "+42" },
   { id: "5", name: "Gloss Black 21\"", size: "21\"", compatibleCars: 6, enabled: true, pcd: "5x130", offset: "+50" },
 ];
+
+export const createModel = (modelData: Partial<Car>): Car => {
+  const newModel: Car = {
+    id: (mockCars.length + 1).toString(),
+    ...modelData,
+    colors: modelData.colors || [],
+    images: modelData.images || 0,
+    enabled: modelData.enabled || false,
+  } as Car;
+  mockCars.push(newModel);
+  return newModel;
+};

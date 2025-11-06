@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Trash2, Plus } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
+import { AddModelModal } from "@/components/AddModelModal";
 import { Switch } from "@/components/ui/switch";
 import {
   Select,
@@ -37,6 +38,7 @@ export default function CarModelPage() {
   const [selectedMake, setSelectedMake] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const modelsPerPage = 5;
 
   useEffect(() => {
@@ -73,6 +75,10 @@ export default function CarModelPage() {
               Manage car models by make.
             </p>
           </div>
+          <Button onClick={() => setIsModalOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Model
+          </Button>
         </div>
 
         {/* Filters */}
@@ -189,6 +195,12 @@ export default function CarModelPage() {
           </Pagination>
         )}
       </div>
+      <AddModelModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onModelAdded={() => handleMakeChange(selectedMake)}
+        make={selectedMake}
+      />
     </MainLayout>
   );
 }
