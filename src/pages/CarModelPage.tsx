@@ -1,9 +1,6 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { Edit, Trash2, Plus } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
-import { AddModelModal } from "@/components/AddModelModal";
 import { Switch } from "@/components/ui/switch";
 import {
   Select,
@@ -28,41 +25,61 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { Badge } from "@/components/ui/badge";
-import { Car, getMakes, getModelsByMake } from "@/lib/mockData";
+import { Make, Model } from "@/lib/types";
+import { getMakes, getModelsByMake } from "@/lib/api";
 import { toast } from "sonner";
 
 export default function CarModelPage() {
-  const navigate = useNavigate();
-  const [makes, setMakes] = useState<string[]>([]);
-  const [models, setModels] = useState<Car[]>([]);
+  const [makes, setMakes] = useState<Make[]>([]);
+  const [models, setModels] = useState<Model[]>([]);
   const [selectedMake, setSelectedMake] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const modelsPerPage = 5;
 
   useEffect(() => {
-    setMakes(getMakes());
+    const fetchMakes = async () => {
+      try {
+        const data = await getMakes();
+        setMakes(data);
+      } catch (err) {
+        setError("Failed to fetch makes.");
+        toast.error("Failed to fetch makes.");
+      }
+    };
+    fetchMakes();
   }, []);
 
-  const handleMakeChange = (make: string) => {
-    setSelectedMake(make);
+  const handleMakeChange = async (makeId: string) => {
+    if (!makeId) {
+      handleClear();
+      return;
+    }
+    setSelectedMake(makeId);
     setLoading(true);
-    setTimeout(() => {
-      setModels(getModelsByMake(make));
+    setError(null);
+    try {
+      const data = await getModelsByMake(makeId);
+      setModels(data);
+    } catch (err) {
+      setError("Failed to fetch models.");
+      toast.error("Failed to fetch models.");
+    } finally {
       setLoading(false);
       setCurrentPage(1);
-    }, 500);
+    }
+  };
+
+  const handleClear = () => {
+    setSelectedMake("");
+    setModels([]);
+    setError(null);
   };
 
   const toggleEnabled = (id: string) => {
     setModels(models.map((model) => (model.id === id ? { ...model, enabled: !model.enabled } : model)));
     toast.success("Model status updated");
-  };
-
-  const handleDelete = (id: string) => {
-    setModels(models.filter((model) => model.id !== id));
-    toast.success("Model deleted successfully");
   };
 
   return (
@@ -75,10 +92,6 @@ export default function CarModelPage() {
               Manage car models by make.
             </p>
           </div>
-          <Button onClick={() => setIsModalOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Model
-          </Button>
         </div>
 
         {/* Filters */}
@@ -89,12 +102,17 @@ export default function CarModelPage() {
             </SelectTrigger>
             <SelectContent>
               {makes.map((make) => (
-                <SelectItem key={make} value={make}>
-                  {make}
+                <SelectItem key={make.id} value={make.id}>
+                  {make.name}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
+          {selectedMake && (
+            <Button variant="ghost" onClick={handleClear}>
+              Clear
+            </Button>
+          )}
         </div>
 
         {/* Table */}
@@ -106,14 +124,19 @@ export default function CarModelPage() {
                 <TableHead>Colors</TableHead>
                 <TableHead>Images</TableHead>
                 <TableHead>Enabled</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center">
+                  <TableCell colSpan={4} className="text-center">
                     Loading...
+                  </TableCell>
+                </TableRow>
+              ) : error ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center text-red-500">
+                    {error}
                   </TableCell>
                 </TableRow>
               ) : models.length > 0 ? (
@@ -121,7 +144,7 @@ export default function CarModelPage() {
                   .slice((currentPage - 1) * modelsPerPage, currentPage * modelsPerPage)
                   .map((model) => (
                     <TableRow key={model.id}>
-                      <TableCell className="font-medium">{model.model}</TableCell>
+                      <TableCell className="font-medium">{model.name}</TableCell>
                       <TableCell>
                         <div className="flex gap-1 flex-wrap">
                           {model.colors.map((color) => (
@@ -138,29 +161,11 @@ export default function CarModelPage() {
                           onCheckedChange={() => toggleEnabled(model.id)}
                         />
                       </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => navigate(`/cars/${model.id}`)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDelete(model.id)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
                     </TableRow>
                   ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center">
+                  <TableCell colSpan={4} className="text-center">
                     {selectedMake ? "No models found." : "Select a make to see the models."}
                   </TableCell>
                 </TableRow>
@@ -195,12 +200,6 @@ export default function CarModelPage() {
           </Pagination>
         )}
       </div>
-      <AddModelModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onModelAdded={() => handleMakeChange(selectedMake)}
-        make={selectedMake}
-      />
     </MainLayout>
   );
 }

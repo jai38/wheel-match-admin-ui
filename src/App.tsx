@@ -99,14 +99,6 @@ const App = () => (
             }
           />
           <Route
-            path="/car-models"
-            element={
-              <ProtectedRoute>
-                <CarModels />
-              </ProtectedRoute>
-            }
-          />
-          <Route
             path="/car-colors"
             element={
               <ProtectedRoute>
