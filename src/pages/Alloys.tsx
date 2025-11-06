@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Search, Edit, Trash2 } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Loader } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,27 +13,48 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { mockAlloys, Alloy } from "@/lib/mockData";
-import { toast } from "sonner";
+import { useAlloys, useUpdateAlloy, useDeleteAlloy } from "@/hooks/useAlloys";
+import type { Alloy } from "@/lib/api";
 
 export default function Alloys() {
   const navigate = useNavigate();
-  const [alloys, setAlloys] = useState<Alloy[]>(mockAlloys);
   const [searchQuery, setSearchQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const limit = 10;
 
-  const filteredAlloys = alloys.filter((alloy) =>
-    alloy.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const { data, isLoading, error } = useAlloys({
+    page,
+    limit,
+    search: searchQuery,
+  });
+  const updateAlloy = useUpdateAlloy();
+  const deleteAlloy = useDeleteAlloy();
 
-  const toggleEnabled = (id: string) => {
-    setAlloys(alloys.map((alloy) => (alloy.id === id ? { ...alloy, enabled: !alloy.enabled } : alloy)));
-    toast.success("Alloy status updated");
+  const handleToggleActive = (
+    alloyId: number,
+    currentStatus: boolean | undefined,
+  ) => {
+    updateAlloy.mutate({
+      id: alloyId,
+      data: { isActive: !currentStatus },
+    });
   };
 
-  const handleDelete = (id: string) => {
-    setAlloys(alloys.filter((alloy) => alloy.id !== id));
-    toast.success("Alloy deleted successfully");
+  const handleDelete = (alloyId: number) => {
+    if (confirm("Are you sure you want to delete this alloy?")) {
+      deleteAlloy.mutate(alloyId);
+    }
   };
+
+  if (error) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center h-64">
+          <p className="text-red-500">Error loading alloys: {error.message}</p>
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>
@@ -66,51 +87,94 @@ export default function Alloys() {
 
         {/* Table */}
         <div className="rounded-lg border bg-card">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Alloy Name</TableHead>
-                <TableHead>Size</TableHead>
-                <TableHead>PCD</TableHead>
-                <TableHead>Offset</TableHead>
-                <TableHead>Compatible Cars</TableHead>
-                <TableHead>Enabled</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredAlloys.map((alloy) => (
-                <TableRow key={alloy.id}>
-                  <TableCell className="font-medium">{alloy.name}</TableCell>
-                  <TableCell>{alloy.size}</TableCell>
-                  <TableCell>{alloy.pcd}</TableCell>
-                  <TableCell>{alloy.offset}</TableCell>
-                  <TableCell>{alloy.compatibleCars} cars</TableCell>
-                  <TableCell>
-                    <Switch checked={alloy.enabled} onCheckedChange={() => toggleEnabled(alloy.id)} />
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => navigate(`/alloys/${alloy.id}`)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDelete(alloy.id)}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          {isLoading ? (
+            <div className="flex items-center justify-center h-64">
+              <Loader className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : data?.items && data.items.length > 0 ? (
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Alloy Name</TableHead>
+                    <TableHead>Design</TableHead>
+                    <TableHead>PCD</TableHead>
+                    <TableHead>Finish</TableHead>
+                    <TableHead>Size</TableHead>
+                    <TableHead>Active</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {data.items.map((alloy) => (
+                    <TableRow key={alloy.id}>
+                      <TableCell className="font-medium">
+                        {alloy.name}
+                      </TableCell>
+                      <TableCell>{alloy.design?.name || "N/A"}</TableCell>
+                      <TableCell>{alloy.pcd?.name || "N/A"}</TableCell>
+                      <TableCell>{alloy.finish?.name || "N/A"}</TableCell>
+                      <TableCell>{alloy.size?.specs || "N/A"}</TableCell>
+                      <TableCell>
+                        <Switch
+                          checked={alloy.isActive || false}
+                          onCheckedChange={() =>
+                            handleToggleActive(alloy.id, alloy.isActive)
+                          }
+                          disabled={updateAlloy.isPending}
+                        />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => navigate(`/alloys/${alloy.id}`)}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(alloy.id)}
+                            disabled={deleteAlloy.isPending}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              {/* Pagination */}
+              <div className="flex items-center justify-between p-4 border-t">
+                <p className="text-sm text-muted-foreground">
+                  Showing page {data.pagination.page} of{" "}
+                  {data.pagination.totalPages} ({data.pagination.total} total
+                  items)
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(Math.max(1, page - 1))}
+                    disabled={page === 1}>
+                    Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(page + 1)}
+                    disabled={page >= data.pagination.totalPages}>
+                    Next
+                  </Button>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="flex items-center justify-center h-64">
+              <p className="text-muted-foreground">No alloys found</p>
+            </div>
+          )}
         </div>
       </div>
     </MainLayout>

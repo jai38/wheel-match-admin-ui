@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Card,
   CardContent,
@@ -10,9 +11,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useCars } from "@/hooks/useCars";
+import { useAlloys } from "@/hooks/useAlloys";
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { data: carsData, isLoading: carsLoading } = useCars({ page: 1, limit: 1 });
+  const { data: alloysData, isLoading: alloysLoading } = useAlloys({ page: 1, limit: 1 });
+
+  const totalCars = carsData?.pagination.totalItems ?? 0;
+  const totalAlloys = alloysData?.pagination.totalItems ?? 0;
+  const activeListings = Math.floor(totalCars * 0.75); // Mock calculation
+  const totalRevenue = (totalCars * 1850).toFixed(1); // Mock calculation
 
   return (
     <MainLayout>
@@ -26,34 +36,50 @@ export default function Dashboard() {
 
         {/* Stats Grid */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <StatsCard
-            title="Total Cars"
-            value="248"
-            icon={Car}
-            trend="+12% from last month"
-            trendUp={true}
-          />
-          <StatsCard
-            title="Total Alloys"
-            value="432"
-            icon={Settings}
-            trend="+8% from last month"
-            trendUp={true}
-          />
-          <StatsCard
-            title="Active Listings"
-            value="187"
-            icon={Package}
-            trend="+5% from last month"
-            trendUp={true}
-          />
-          <StatsCard
-            title="Total Revenue"
-            value="$45.2K"
-            icon={TrendingUp}
-            trend="+23% from last month"
-            trendUp={true}
-          />
+          {carsLoading ? (
+            <Skeleton className="h-32 rounded-lg" />
+          ) : (
+            <StatsCard
+              title="Total Cars"
+              value={totalCars.toString()}
+              icon={Car}
+              trend="+12% from last month"
+              trendUp={true}
+            />
+          )}
+          {alloysLoading ? (
+            <Skeleton className="h-32 rounded-lg" />
+          ) : (
+            <StatsCard
+              title="Total Alloys"
+              value={totalAlloys.toString()}
+              icon={Settings}
+              trend="+8% from last month"
+              trendUp={true}
+            />
+          )}
+          {carsLoading ? (
+            <Skeleton className="h-32 rounded-lg" />
+          ) : (
+            <StatsCard
+              title="Active Listings"
+              value={activeListings.toString()}
+              icon={Package}
+              trend="+5% from last month"
+              trendUp={true}
+            />
+          )}
+          {carsLoading ? (
+            <Skeleton className="h-32 rounded-lg" />
+          ) : (
+            <StatsCard
+              title="Total Revenue"
+              value={`$${totalRevenue}K`}
+              icon={TrendingUp}
+              trend="+23% from last month"
+              trendUp={true}
+            />
+          )}
         </div>
 
         {/* Quick Actions */}

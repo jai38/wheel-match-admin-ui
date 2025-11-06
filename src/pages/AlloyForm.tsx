@@ -1,41 +1,148 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader, Upload } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { toast } from "sonner";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  useAlloyDesigns,
+  useAlloyPCDs,
+  useAlloyFinishes,
+  useAlloySizes,
+  useAlloy,
+  useCreateAlloy,
+  useUpdateAlloy,
+} from "@/hooks/useAlloys";
+import { useToast } from "@/components/ui/use-toast";
+import type { AlloyCreateRequest } from "@/lib/api";
 
 export default function AlloyForm() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { toast } = useToast();
+  const alloyId = id ? parseInt(id) : undefined;
   const isEdit = Boolean(id);
 
-  const [formData, setFormData] = useState({
-    name: "",
-    size: "",
-    pcd: "",
-    offset: "",
-    centerBore: "",
-    loadRating: "",
-    bis: "",
-    enabled: true,
+  // Form data state
+  const [formData, setFormData] = useState<AlloyCreateRequest>({
+    designId: 0,
+    pcdId: 0,
+    finishId: 0,
+    sizeId: 0,
+    isActive: true,
+  });
+  const [alloyImages, setAlloyImages] = useState<string[]>([]);
+
+  // Fetch existing alloy data if editing
+  const { data: existingAlloy, isLoading: alloyLoading } = useAlloy(alloyId);
+
+  // Fetch master data
+  const { data: designsData, isLoading: designsLoading } = useAlloyDesigns({
+    limit: 100,
+  });
+  const { data: pcdsData, isLoading: pcdsLoading } = useAlloyPCDs({
+    limit: 100,
+  });
+  const { data: finishesData, isLoading: finishesLoading } = useAlloyFinishes({
+    limit: 100,
+  });
+  const { data: sizesData, isLoading: sizesLoading } = useAlloySizes({
+    limit: 100,
   });
 
+  // Mutations
+  const createAlloy = useCreateAlloy();
+  const updateAlloy = useUpdateAlloy();
+
+  // Load existing alloy data when fetched
+  useEffect(() => {
+    if (isEdit && existingAlloy) {
+      setFormData({
+        designId: existingAlloy.designId,
+        pcdId: existingAlloy.pcdId,
+        finishId: existingAlloy.finishId,
+        sizeId: existingAlloy.sizeId,
+        isActive: existingAlloy.isActive ?? true,
+      });
+    }
+  }, [existingAlloy, isEdit]);
+
   const handleSave = () => {
-    toast.success(isEdit ? "Alloy updated successfully" : "Alloy created successfully");
-    navigate("/alloys");
+    if (
+      !formData.designId ||
+      !formData.pcdId ||
+      !formData.finishId ||
+      !formData.sizeId
+    ) {
+      toast.error("Please fill all required fields");
+      return;
+    }
+
+    if (isEdit && alloyId) {
+      updateAlloy.mutate(
+        { id: alloyId, data: formData },
+        {
+          onSuccess: () => {
+            navigate("/alloys");
+          },
+        },
+      );
+    } else {
+      createAlloy.mutate(formData, {
+        onSuccess: () => {
+          navigate("/alloys");
+        },
+      });
+    }
   };
+
+  const isLoading =
+    alloyLoading ||
+    designsLoading ||
+    pcdsLoading ||
+    finishesLoading ||
+    sizesLoading;
+  const isSaving = createAlloy.isPending || updateAlloy.isPending;
+
+  if (isEdit && alloyLoading) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loader className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>
       <div className="space-y-6">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/alloys")}>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/alloys")}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
@@ -60,74 +167,140 @@ export default function AlloyForm() {
             <Card>
               <CardHeader>
                 <CardTitle>Alloy Specifications</CardTitle>
-                <CardDescription>Technical details and dimensions</CardDescription>
+                <CardDescription>
+                  Select alloy specifications from available options
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Alloy Name</Label>
-                    <Input
-                      id="name"
-                      placeholder="e.g., Sport Alloy 18 inch"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    />
+                {!designsData?.items || designsData.items.length === 0 ? (
+                  <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800">
+                    <p className="font-medium">⚠️ No alloy data available</p>
+                    <p className="text-sm mt-1">
+                      Please create alloy designs, PCDs, finishes, and sizes
+                      from the backend admin panel first.
+                    </p>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="size">Size</Label>
-                    <Input
-                      id="size"
-                      placeholder="e.g., 18 inch"
-                      value={formData.size}
-                      onChange={(e) => setFormData({ ...formData, size: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="pcd">PCD (Pitch Circle Diameter)</Label>
-                    <Input
-                      id="pcd"
-                      placeholder="e.g., 5x120"
-                      value={formData.pcd}
-                      onChange={(e) => setFormData({ ...formData, pcd: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="offset">Offset</Label>
-                    <Input
-                      id="offset"
-                      placeholder="e.g., +35"
-                      value={formData.offset}
-                      onChange={(e) => setFormData({ ...formData, offset: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="centerBore">Center Bore (mm)</Label>
-                    <Input
-                      id="centerBore"
-                      placeholder="e.g., 72.6"
-                      value={formData.centerBore}
-                      onChange={(e) => setFormData({ ...formData, centerBore: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="loadRating">Load Rating (kg)</Label>
-                    <Input
-                      id="loadRating"
-                      placeholder="e.g., 800"
-                      value={formData.loadRating}
-                      onChange={(e) => setFormData({ ...formData, loadRating: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="bis">BIS Certification</Label>
-                    <Input
-                      id="bis"
-                      placeholder="e.g., BIS123456"
-                      value={formData.bis}
-                      onChange={(e) => setFormData({ ...formData, bis: e.target.value })}
-                    />
-                  </div>
-                </div>
+                ) : (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="design">Design *</Label>
+                      <Select
+                        value={formData.designId.toString()}
+                        onValueChange={(value) =>
+                          setFormData({
+                            ...formData,
+                            designId: parseInt(value),
+                          })
+                        }>
+                        <SelectTrigger id="design" disabled={designsLoading}>
+                          <SelectValue placeholder="Select a design" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {designsData?.items?.map((design) => (
+                            <SelectItem
+                              key={design.id}
+                              value={design.id.toString()}>
+                              {design.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="pcd">PCD (Bolt Pattern) *</Label>
+                      {!pcdsData?.items || pcdsData.items.length === 0 ? (
+                        <div className="p-2 bg-gray-100 rounded text-sm text-gray-600">
+                          No PCDs available
+                        </div>
+                      ) : (
+                        <Select
+                          value={formData.pcdId.toString()}
+                          onValueChange={(value) =>
+                            setFormData({ ...formData, pcdId: parseInt(value) })
+                          }>
+                          <SelectTrigger id="pcd" disabled={pcdsLoading}>
+                            <SelectValue placeholder="Select a PCD" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {pcdsData?.items?.map((pcd) => (
+                              <SelectItem
+                                key={pcd.id}
+                                value={pcd.id.toString()}>
+                                {pcd.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="finish">Finish *</Label>
+                      {!finishesData?.items ||
+                      finishesData.items.length === 0 ? (
+                        <div className="p-2 bg-gray-100 rounded text-sm text-gray-600">
+                          No finishes available
+                        </div>
+                      ) : (
+                        <Select
+                          value={formData.finishId.toString()}
+                          onValueChange={(value) =>
+                            setFormData({
+                              ...formData,
+                              finishId: parseInt(value),
+                            })
+                          }>
+                          <SelectTrigger id="finish" disabled={finishesLoading}>
+                            <SelectValue placeholder="Select a finish" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {finishesData?.items?.map((finish) => (
+                              <SelectItem
+                                key={finish.id}
+                                value={finish.id.toString()}>
+                                {finish.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="size">
+                        Size (Diameter x Width ET Offset) *
+                      </Label>
+                      {!sizesData?.items || sizesData.items.length === 0 ? (
+                        <div className="p-2 bg-gray-100 rounded text-sm text-gray-600">
+                          No sizes available
+                        </div>
+                      ) : (
+                        <Select
+                          value={formData.sizeId.toString()}
+                          onValueChange={(value) =>
+                            setFormData({
+                              ...formData,
+                              sizeId: parseInt(value),
+                            })
+                          }>
+                          <SelectTrigger id="size" disabled={sizesLoading}>
+                            <SelectValue placeholder="Select a size" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {sizesData?.items?.map((size) => (
+                              <SelectItem
+                                key={size.id}
+                                value={size.id.toString()}>
+                                {size.specs}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </div>
+                  </>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -136,12 +309,15 @@ export default function AlloyForm() {
             <Card>
               <CardHeader>
                 <CardTitle>Finish Options</CardTitle>
-                <CardDescription>Add different finish variants for this alloy</CardDescription>
+                <CardDescription>
+                  Add different finish variants for this alloy
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <Button variant="outline">+ Add Finish</Button>
                 <div className="border rounded-lg p-4 text-center text-muted-foreground">
-                  No finishes added yet. Add finishes like Gloss, Matt, or Chrome.
+                  No finishes added yet. Add finishes like Gloss, Matt, or
+                  Chrome.
                 </div>
               </CardContent>
             </Card>
@@ -151,7 +327,9 @@ export default function AlloyForm() {
             <Card>
               <CardHeader>
                 <CardTitle>Compatible Vehicles</CardTitle>
-                <CardDescription>Map this alloy to compatible car models</CardDescription>
+                <CardDescription>
+                  Map this alloy to compatible car models
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
@@ -176,21 +354,23 @@ export default function AlloyForm() {
             <Card>
               <CardHeader>
                 <CardTitle>Listing Settings</CardTitle>
-                <CardDescription>Control visibility of this alloy</CardDescription>
+                <CardDescription>
+                  Control visibility of this alloy
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label htmlFor="enabled">Enable Alloy Listing</Label>
+                    <Label htmlFor="active">Enable Alloy Listing</Label>
                     <p className="text-sm text-muted-foreground">
                       Make this alloy visible in the marketplace
                     </p>
                   </div>
                   <Switch
-                    id="enabled"
-                    checked={formData.enabled}
+                    id="active"
+                    checked={formData.isActive ?? true}
                     onCheckedChange={(checked) =>
-                      setFormData({ ...formData, enabled: checked })
+                      setFormData({ ...formData, isActive: checked })
                     }
                   />
                 </div>
@@ -200,10 +380,15 @@ export default function AlloyForm() {
         </Tabs>
 
         <div className="flex justify-end gap-4">
-          <Button variant="outline" onClick={() => navigate("/alloys")}>
+          <Button
+            variant="outline"
+            onClick={() => navigate("/alloys")}
+            disabled={isSaving}>
             Cancel
           </Button>
-          <Button onClick={handleSave}>Save Alloy</Button>
+          <Button onClick={handleSave} disabled={isSaving || isLoading}>
+            {isSaving ? "Saving..." : "Save Alloy"}
+          </Button>
         </div>
       </div>
     </MainLayout>

@@ -1,33 +1,60 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Car } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { toast } from "sonner";
+import { useLogin } from "@/hooks/useAuth";
+import { authService } from "@/lib/api";
 
 export default function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  const login = useLogin();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  // Load credentials and redirect if authenticated
+  useEffect(() => {
+    if (authService.isAuthenticated()) {
+      navigate("/dashboard", { replace: true });
+      return;
+    }
+
+    // Load saved credentials from localStorage
+    const savedEmail = localStorage.getItem("login_email");
+    const savedPassword = localStorage.getItem("login_password");
+    const savedRememberMe = localStorage.getItem("login_remember_me") === "true";
+
+    if (savedEmail && savedPassword && savedRememberMe) {
+      setEmail(savedEmail);
+      setPassword(savedPassword);
+      setRememberMe(true);
+    }
+  }, [navigate]);
+
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    
+    if (!email || !password) {
+      return;
+    }
 
-    // Mock authentication - replace with actual API call later
-    setTimeout(() => {
-      if (email && password) {
-        localStorage.setItem("auth_token", "mock_token_123");
-        toast.success("Login successful!");
-        navigate("/dashboard");
-      } else {
-        toast.error("Please enter email and password");
-      }
-      setIsLoading(false);
-    }, 800);
+    // Save credentials if "Remember me" is checked
+    if (rememberMe) {
+      localStorage.setItem("login_email", email);
+      localStorage.setItem("login_password", password);
+      localStorage.setItem("login_remember_me", "true");
+    } else {
+      // Clear saved credentials if not checking "Remember me"
+      localStorage.removeItem("login_email");
+      localStorage.removeItem("login_password");
+      localStorage.removeItem("login_remember_me");
+    }
+
+    login.mutate({ email, password });
   };
 
   return (
@@ -66,8 +93,18 @@ export default function Login() {
                 required
               />
             </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Signing in..." : "Sign In"}
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="remember-me"
+                checked={rememberMe}
+                onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+              />
+              <Label htmlFor="remember-me" className="text-sm font-normal cursor-pointer">
+                Remember me
+              </Label>
+            </div>
+            <Button type="submit" className="w-full" disabled={login.isPending}>
+              {login.isPending ? "Signing in..." : "Sign In"}
             </Button>
           </form>
         </CardContent>
