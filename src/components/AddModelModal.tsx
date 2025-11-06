@@ -32,6 +32,8 @@ export function AddModelModal({ isOpen, onClose, onModelAdded, make }: AddModelM
     createModel({
       company: make,
       model: modelName,
+      year: parseInt(year),
+      fuelType: fuelType,
     });
     toast.success("Model added successfully");
     onModelAdded();
