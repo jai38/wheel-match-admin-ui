@@ -10,6 +10,7 @@ import CarForm from "./pages/CarForm";
 import Alloys from "./pages/Alloys";
 import AlloyForm from "./pages/AlloyForm";
 import NotFound from "./pages/NotFound";
+import CarModelPage from "./pages/CarModelPage";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,7 @@ const App = () => (
           <Route path="/cars" element={<Cars />} />
           <Route path="/cars/new" element={<CarForm />} />
           <Route path="/cars/:id" element={<CarForm />} />
+          <Route path="/car-models" element={<CarModelPage />} />
           <Route path="/alloys" element={<Alloys />} />
           <Route path="/alloys/new" element={<AlloyForm />} />
           <Route path="/alloys/:id" element={<AlloyForm />} />
