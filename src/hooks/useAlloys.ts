@@ -111,6 +111,49 @@ export const useDeleteAlloy = () => {
   });
 };
 
+// ========== Alloy - Car Mapping Hooks ==========
+
+export const useAlloyCars = (alloyId: number | null) => {
+  return useQuery({
+    queryKey: ["alloy-cars", alloyId],
+    queryFn: () => alloysService.getAlloyCars(alloyId!),
+    enabled: !!alloyId,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+  });
+};
+
+export const useAddCarsToAlloy = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ alloyId, carIds }: { alloyId: number; carIds: number[] }) =>
+      alloysService.addCarsToAlloy(alloyId, carIds),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["alloy-cars", variables.alloyId] });
+      toast.success("Cars added to alloy successfully");
+    },
+    onError: (error: { message?: string }) => {
+      toast.error(error.message || "Failed to add cars to alloy");
+    },
+  });
+};
+
+export const useRemoveCarFromAlloy = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ alloyId, carId }: { alloyId: number; carId: number }) =>
+      alloysService.removeCarFromAlloy(alloyId, carId),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["alloy-cars", variables.alloyId] });
+      toast.success("Car removed from alloy successfully");
+    },
+    onError: (error: { message?: string }) => {
+      toast.error(error.message || "Failed to remove car from alloy");
+    },
+  });
+};
+
 // ========== Create Master Data Hooks ==========
 
 export const useCreateAlloyDesign = () => {

@@ -16,13 +16,21 @@ import { useAlloys } from "@/hooks/useAlloys";
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { data: carsData, isLoading: carsLoading } = useCars({ page: 1, limit: 1 });
-  const { data: alloysData, isLoading: alloysLoading } = useAlloys({ page: 1, limit: 1 });
+  
+  // Fetch total counts (limit: 1 to get only pagination info)
+  const { data: totalCarsData, isLoading: totalCarsLoading } = useCars({ page: 1, limit: 1 });
+  const { data: totalAlloysData, isLoading: totalAlloysLoading } = useAlloys({ page: 1, limit: 1 });
+  
+  // Fetch active counts
+  const { data: activeCarsData, isLoading: activeCarsLoading } = useCars({ page: 1, limit: 1, isActive: true });
+  const { data: activeAlloysData, isLoading: activeAlloysLoading } = useAlloys({ page: 1, limit: 1, isActive: true });
 
-  const totalCars = carsData?.pagination.totalItems ?? 0;
-  const totalAlloys = alloysData?.pagination.totalItems ?? 0;
-  const activeListings = Math.floor(totalCars * 0.75); // Mock calculation
-  const totalRevenue = (totalCars * 1850).toFixed(1); // Mock calculation
+  const totalCars = totalCarsData?.pagination.totalItems ?? 0;
+  const totalAlloys = totalAlloysData?.pagination.totalItems ?? 0;
+  const activeCars = activeCarsData?.pagination.totalItems ?? 0;
+  const activeAlloys = activeAlloysData?.pagination.totalItems ?? 0;
+  
+  const isLoading = totalCarsLoading || totalAlloysLoading || activeCarsLoading || activeAlloysLoading;
 
   return (
     <MainLayout>
@@ -36,47 +44,47 @@ export default function Dashboard() {
 
         {/* Stats Grid */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {carsLoading ? (
+          {isLoading ? (
             <Skeleton className="h-32 rounded-lg" />
           ) : (
             <StatsCard
               title="Total Cars"
               value={totalCars.toString()}
               icon={Car}
-              trend="+12% from last month"
+              trend=""
               trendUp={true}
             />
           )}
-          {alloysLoading ? (
+          {isLoading ? (
             <Skeleton className="h-32 rounded-lg" />
           ) : (
             <StatsCard
               title="Total Alloys"
               value={totalAlloys.toString()}
               icon={Settings}
-              trend="+8% from last month"
+              trend=""
               trendUp={true}
             />
           )}
-          {carsLoading ? (
+          {isLoading ? (
             <Skeleton className="h-32 rounded-lg" />
           ) : (
             <StatsCard
-              title="Active Listings"
-              value={activeListings.toString()}
+              title="Active Cars"
+              value={activeCars.toString()}
               icon={Package}
-              trend="+5% from last month"
+              trend=""
               trendUp={true}
             />
           )}
-          {carsLoading ? (
+          {isLoading ? (
             <Skeleton className="h-32 rounded-lg" />
           ) : (
             <StatsCard
-              title="Total Revenue"
-              value={`$${totalRevenue}K`}
+              title="Active Alloys"
+              value={activeAlloys.toString()}
               icon={TrendingUp}
-              trend="+23% from last month"
+              trend=""
               trendUp={true}
             />
           )}

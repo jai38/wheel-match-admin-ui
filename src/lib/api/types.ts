@@ -30,7 +30,7 @@ export interface PaginatedResponse<T> {
 
 // Helper to normalize response structure
 export const normalizeListResponse = <T,>(data: Record<string, unknown>): { items: T[]; pagination: PaginationMeta } => {
-  const items = (data.items || data.cars || data.alloys || []) as T[];
+  const items = (data.items || data.cars || data.alloys || data.makes || data.models || data.variants || data.colors || []) as T[];
   return { items, pagination: data.pagination as PaginationMeta };
 };
 
@@ -91,6 +91,8 @@ export interface CarVariant {
   id: number;
   name: string;
   modelId: number;
+  defaultAlloySize: number;
+  isActive?: boolean;
   model?: CarModel;
   createdAt?: string;
   updatedAt?: string;
@@ -138,6 +140,7 @@ export interface CarFilterParams extends PaginationParams {
   modelId?: number;
   colorId?: number;
   variantId?: number;
+  isActive?: boolean;
 }
 
 // Alloy Master Data Types

@@ -26,6 +26,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import {
   useAlloyDesigns,
   useAlloyPCDs,
   useAlloyFinishes,
@@ -50,7 +57,6 @@ export default function AlloyForm() {
     pcdId: 0,
     finishId: 0,
     sizeId: 0,
-    isActive: true,
   });
   const [alloyImages, setAlloyImages] = useState<string[]>([]);
 
@@ -83,19 +89,22 @@ export default function AlloyForm() {
         pcdId: existingAlloy.pcdId,
         finishId: existingAlloy.finishId,
         sizeId: existingAlloy.sizeId,
-        isActive: existingAlloy.isActive ?? true,
       });
     }
   }, [existingAlloy, isEdit]);
 
   const handleSave = () => {
     if (
-      !formData.designId ||
-      !formData.pcdId ||
-      !formData.finishId ||
-      !formData.sizeId
+      formData.designId === 0 ||
+      formData.pcdId === 0 ||
+      formData.finishId === 0 ||
+      formData.sizeId === 0
     ) {
-      toast.error("Please fill all required fields");
+      toast({
+        title: "Validation Error",
+        description: "Please fill all required fields",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -156,11 +165,9 @@ export default function AlloyForm() {
         </div>
 
         <Tabs defaultValue="details" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="details">Alloy Details</TabsTrigger>
-            <TabsTrigger value="finishes">Finishes</TabsTrigger>
-            <TabsTrigger value="fitment">Fitment Mapping</TabsTrigger>
-            <TabsTrigger value="listing">Listing</TabsTrigger>
+            <TabsTrigger value="cars">Car List</TabsTrigger>
           </TabsList>
 
           <TabsContent value="details">
@@ -305,25 +312,7 @@ export default function AlloyForm() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="finishes">
-            <Card>
-              <CardHeader>
-                <CardTitle>Finish Options</CardTitle>
-                <CardDescription>
-                  Add different finish variants for this alloy
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Button variant="outline">+ Add Finish</Button>
-                <div className="border rounded-lg p-4 text-center text-muted-foreground">
-                  No finishes added yet. Add finishes like Gloss, Matt, or
-                  Chrome.
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="fitment">
+          <TabsContent value="cars">
             <Card>
               <CardHeader>
                 <CardTitle>Compatible Vehicles</CardTitle>
@@ -332,47 +321,9 @@ export default function AlloyForm() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Car Company</Label>
-                    <Input placeholder="Select company" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Model</Label>
-                    <Input placeholder="Select model" />
-                  </div>
-                </div>
-                <Button variant="outline">+ Add Fitment</Button>
+                <Button variant="outline">Manage Car List</Button>
                 <div className="border rounded-lg p-4 text-center text-muted-foreground">
-                  No fitments mapped yet.
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="listing">
-            <Card>
-              <CardHeader>
-                <CardTitle>Listing Settings</CardTitle>
-                <CardDescription>
-                  Control visibility of this alloy
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label htmlFor="active">Enable Alloy Listing</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Make this alloy visible in the marketplace
-                    </p>
-                  </div>
-                  <Switch
-                    id="active"
-                    checked={formData.isActive ?? true}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, isActive: checked })
-                    }
-                  />
+                  No cars mapped yet.
                 </div>
               </CardContent>
             </Card>

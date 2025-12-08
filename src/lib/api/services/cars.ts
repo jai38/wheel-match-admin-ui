@@ -25,10 +25,10 @@ export const carsService = {
    */
   async getMakes(params?: PaginationParams): Promise<PaginatedResponse<CarMake>> {
     const queryString = params ? buildQueryString(params) : "";
-    const response = await apiClient.get<ApiResponse<PaginatedResponse<CarMake>>>(
+    const response = await apiClient.get<ApiResponse<Record<string, unknown>>>(
       `/admin/car/makes${queryString}`
     );
-    return response.data.data!;
+    return normalizeListResponse<CarMake>(response.data.data!);
   },
 
   /**
@@ -48,10 +48,10 @@ export const carsService = {
    */
   async getModels(params?: PaginationParams & { makeId?: number }): Promise<PaginatedResponse<CarModel>> {
     const queryString = params ? buildQueryString(params) : "";
-    const response = await apiClient.get<ApiResponse<PaginatedResponse<CarModel>>>(
+    const response = await apiClient.get<ApiResponse<Record<string, unknown>>>(
       `/admin/car/models${queryString}`
     );
-    return response.data.data!;
+    return normalizeListResponse<CarModel>(response.data.data!);
   },
 
   /**
@@ -94,16 +94,16 @@ export const carsService = {
    */
   async getVariants(params?: PaginationParams & { modelId?: number }): Promise<PaginatedResponse<CarVariant>> {
     const queryString = params ? buildQueryString(params) : "";
-    const response = await apiClient.get<ApiResponse<PaginatedResponse<CarVariant>>>(
+    const response = await apiClient.get<ApiResponse<Record<string, unknown>>>(
       `/admin/car/variants${queryString}`
     );
-    return response.data.data!;
+    return normalizeListResponse<CarVariant>(response.data.data!);
   },
 
   /**
    * Create new car variant
    */
-  async createVariant(data: { name: string; modelId: number }): Promise<CarVariant> {
+  async createVariant(data: { name: string; modelId: number; defaultAlloySize: number; isActive?: boolean }): Promise<CarVariant> {
     const response = await apiClient.post<ApiResponse<CarVariant>>(
       "/admin/car/variants",
       data

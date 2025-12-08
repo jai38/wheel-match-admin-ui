@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Edit, Trash2, Loader } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
@@ -29,12 +29,21 @@ import {
 } from "@/components/ui/select";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { carsService } from "@/lib/api/services/cars";
-import type { CarVariant, CarModel } from "@/lib/api";
+import type { CarVariant, CarModel, CarMake } from "@/lib/api";
 import { useToast } from "@/components/ui/use-toast";
+
+const STORAGE_KEY_MAKE = "carMaster_selectedMake";
+const STORAGE_KEY_MODEL = "carMaster_selectedModel";
 
 export default function CarVariants() {
   const [isOpen, setIsOpen] = useState(false);
-  const [formData, setFormData] = useState({ name: "", modelId: "" });
+  const [formData, setFormData] = useState({ 
+    name: "", 
+    makeId: "", 
+    modelId: "", 
+    defaultAlloySize: "",
+    isActive: true 
+  });
   const [filterMakeId, setFilterMakeId] = useState<string>("");
   const [filterModelId, setFilterModelId] = useState<string>("");
   const [page, setPage] = useState(1);
@@ -42,33 +51,95 @@ export default function CarVariants() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
+  // Load saved makeId and modelId from localStorage on mount
+  useEffect(() => {
+    const savedMakeId = localStorage.getItem(STORAGE_KEY_MAKE);
+    const savedModelId = localStorage.getItem(STORAGE_KEY_MODEL);
+    if (savedMakeId) {
+      setFilterMakeId(savedMakeId);
+    }
+    if (savedModelId && savedMakeId) {
+      setFilterModelId(savedModelId);
+    }
+  }, []);
+
+  // Save makeId to localStorage when filter changes
+  useEffect(() => {
+    if (filterMakeId) {
+      localStorage.setItem(STORAGE_KEY_MAKE, filterMakeId);
+    }
+  }, [filterMakeId]);
+
+  // Save modelId to localStorage when filter changes
+  useEffect(() => {
+    if (filterModelId) {
+      localStorage.setItem(STORAGE_KEY_MODEL, filterModelId);
+    }
+  }, [filterModelId]);
+
   // Fetch makes for dropdown
-  const { data: makesData } = useQuery({
+  const {
+    data: makesData,
+    isLoading: makesLoading,
+    error: makesError,
+  } = useQuery({
     queryKey: ["carMakesForSelect"],
-    queryFn: () => carsService.getMakes({ limit: 1000 }),
+    queryFn: () => carsService.getMakes({ limit: 100 }),
   });
 
-  // Fetch models filtered by selected make
-  const { data: modelsData } = useQuery({
+  const makes = makesData?.items || [];
+
+  // Fetch models filtered by selected make (for filter)
+  const {
+    data: filterModelsData,
+    isLoading: filterModelsLoading,
+  } = useQuery({
     queryKey: ["carModelsForSelect", filterMakeId],
-    queryFn: () => carsService.getModels({ limit: 1000, makeId: filterMakeId ? parseInt(filterMakeId) : undefined }),
-    enabled: !filterMakeId || parseInt(filterMakeId) > 0,
+    queryFn: () =>
+      carsService.getModels({
+        limit: 100,
+        makeId: parseInt(filterMakeId),
+      }),
+    enabled: !!filterMakeId && parseInt(filterMakeId) > 0,
   });
+
+  const filterModels = filterModelsData?.items || [];
+
+  // Fetch models for Add Variant dialog (filtered by selected make in form)
+  const {
+    data: formModelsData,
+    isLoading: formModelsLoading,
+  } = useQuery({
+    queryKey: ["carModelsForForm", formData.makeId],
+    queryFn: () =>
+      carsService.getModels({
+        limit: 100,
+        makeId: parseInt(formData.makeId),
+      }),
+    enabled: !!formData.makeId && parseInt(formData.makeId) > 0,
+  });
+
+  const formModels = formModelsData?.items || [];
 
   // Fetch variants filtered by selected model
   const { data, isLoading, error } = useQuery({
     queryKey: ["carVariants", page, filterModelId],
-    queryFn: () => carsService.getVariants({ page, limit, modelId: filterModelId ? parseInt(filterModelId) : undefined }),
-    enabled: !filterModelId || parseInt(filterModelId) > 0,
+    queryFn: () =>
+      carsService.getVariants({
+        page,
+        limit,
+        modelId: parseInt(filterModelId),
+      }),
+    enabled: !!filterModelId && parseInt(filterModelId) > 0,
   });
 
   // Create mutation
   const createMutation = useMutation({
-    mutationFn: (newVariant: { name: string; modelId: number }) =>
+    mutationFn: (newVariant: { name: string; modelId: number; defaultAlloySize: number; isActive?: boolean }) =>
       carsService.createVariant(newVariant),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["carVariants"] });
-      setFormData({ name: "", modelId: "" });
+      setFormData({ name: "", makeId: "", modelId: "", defaultAlloySize: "", isActive: true });
       setIsOpen(false);
       toast({ title: "Car Variant created successfully" });
     },
@@ -83,15 +154,37 @@ export default function CarVariants() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const alloySize = parseFloat(formData.defaultAlloySize);
+    if (isNaN(alloySize) || alloySize < 10.0 || alloySize > 30.0) {
+      toast({
+        title: "Invalid alloy size",
+        description: "Alloy size must be between 10.0 and 30.0 inches",
+        variant: "destructive",
+      });
+      return;
+    }
     createMutation.mutate({
       name: formData.name,
       modelId: parseInt(formData.modelId),
+      defaultAlloySize: alloySize,
+      isActive: formData.isActive,
     });
   };
 
   const handleOpenChange = (open: boolean) => {
-    if (!open) {
-      setFormData({ name: "", modelId: "" });
+    if (open) {
+      // Pre-fill form with saved makeId and modelId when opening dialog
+      const savedMakeId = localStorage.getItem(STORAGE_KEY_MAKE);
+      const savedModelId = localStorage.getItem(STORAGE_KEY_MODEL);
+      setFormData({ 
+        name: "", 
+        makeId: savedMakeId || "", 
+        modelId: savedModelId || "", 
+        defaultAlloySize: "", 
+        isActive: true 
+      });
+    } else {
+      setFormData({ name: "", makeId: "", modelId: "", defaultAlloySize: "", isActive: true });
     }
     setIsOpen(open);
   };
@@ -155,25 +248,98 @@ export default function CarVariants() {
                   />
                 </div>
                 <div>
+                  <Label htmlFor="makeId">Car Make</Label>
+                  <Select
+                    value={formData.makeId}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, makeId: value, modelId: "" })
+                    }>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a make" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {makesLoading ? (
+                        <SelectItem value="loading" disabled>
+                          Loading...
+                        </SelectItem>
+                      ) : makesError ? (
+                        <SelectItem value="error" disabled>
+                          Error loading makes
+                        </SelectItem>
+                      ) : makes.length === 0 ? (
+                        <SelectItem value="empty" disabled>
+                          No makes available
+                        </SelectItem>
+                      ) : (
+                        makes.map((make: CarMake) => (
+                          <SelectItem key={make.id} value={make.id.toString()}>
+                            {make.name}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
                   <Label htmlFor="modelId">Car Model</Label>
                   <Select
                     value={formData.modelId}
                     onValueChange={(value) =>
                       setFormData({ ...formData, modelId: value })
-                    }>
+                    }
+                    disabled={!formData.makeId}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select a model" />
+                      <SelectValue
+                        placeholder={
+                          formData.makeId
+                            ? "Select a model"
+                            : "Select a make first"
+                        }
+                      />
                     </SelectTrigger>
                     <SelectContent>
-                      {modelsData?.items?.map((model: CarModel) => (
-                        <SelectItem key={model.id} value={model.id.toString()}>
-                          {model.make?.name} - {model.name}
+                      {formModelsLoading ? (
+                        <SelectItem value="loading" disabled>
+                          Loading...
                         </SelectItem>
-                      ))}
+                      ) : formModels.length === 0 && formData.makeId ? (
+                        <SelectItem value="empty" disabled>
+                          No models available
+                        </SelectItem>
+                      ) : (
+                        formModels.map((model: CarModel) => (
+                          <SelectItem
+                            key={model.id}
+                            value={model.id.toString()}>
+                            {model.name}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
-                <Button type="submit" disabled={createMutation.isPending}>
+                <div>
+                  <Label htmlFor="defaultAlloySize">Default Alloy Size (inches)</Label>
+                  <Input
+                    id="defaultAlloySize"
+                    type="number"
+                    step="0.1"
+                    min="10"
+                    max="30"
+                    placeholder="e.g., 17.5"
+                    value={formData.defaultAlloySize}
+                    onChange={(e) =>
+                      setFormData({ ...formData, defaultAlloySize: e.target.value })
+                    }
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Must be between 10.0 and 30.0 inches
+                  </p>
+                </div>
+                <Button
+                  type="submit"
+                  disabled={createMutation.isPending || !formData.modelId || !formData.defaultAlloySize}>
                   {createMutation.isPending ? "Creating..." : "Create"}
                 </Button>
               </form>
@@ -185,37 +351,76 @@ export default function CarVariants() {
         <div className="bg-card rounded-lg border p-4">
           <div className="flex items-center gap-4">
             <div className="flex-1 max-w-xs">
-              <Label htmlFor="filterMake" className="text-sm">Filter by Make</Label>
-              <Select value={filterMakeId} onValueChange={(value) => {
-                setFilterMakeId(value);
-                setFilterModelId("");
-              }}>
+              <Label htmlFor="filterMake" className="text-sm">
+                Filter by Make
+              </Label>
+              <Select
+                value={filterMakeId}
+                onValueChange={(value) => {
+                  setFilterMakeId(value);
+                  setFilterModelId("");
+                  setPage(1);
+                }}>
                 <SelectTrigger id="filterMake">
-                  <SelectValue placeholder="All Makes" />
+                  <SelectValue placeholder="Select a make" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Makes</SelectItem>
-                  {makesData?.items?.map((make: any) => (
-                    <SelectItem key={make.id} value={make.id.toString()}>
-                      {make.name}
+                  {makesLoading ? (
+                    <SelectItem value="loading" disabled>
+                      Loading...
                     </SelectItem>
-                  ))}
+                  ) : makesError ? (
+                    <SelectItem value="error" disabled>
+                      Error loading makes
+                    </SelectItem>
+                  ) : makes.length === 0 ? (
+                    <SelectItem value="empty" disabled>
+                      No makes available
+                    </SelectItem>
+                  ) : (
+                    makes.map((make: CarMake) => (
+                      <SelectItem key={make.id} value={make.id.toString()}>
+                        {make.name}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
             <div className="flex-1 max-w-xs">
-              <Label htmlFor="filterModel" className="text-sm">Filter by Model</Label>
-              <Select value={filterModelId} onValueChange={setFilterModelId} disabled={!filterMakeId}>
+              <Label htmlFor="filterModel" className="text-sm">
+                Filter by Model
+              </Label>
+              <Select
+                value={filterModelId}
+                onValueChange={(value) => {
+                  setFilterModelId(value);
+                  setPage(1);
+                }}
+                disabled={!filterMakeId}>
                 <SelectTrigger id="filterModel">
-                  <SelectValue placeholder={filterMakeId ? "All Models" : "Select make first"} />
+                  <SelectValue
+                    placeholder={
+                      filterMakeId ? "Select a model" : "Select make first"
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Models</SelectItem>
-                  {modelsData?.items?.map((model: any) => (
-                    <SelectItem key={model.id} value={model.id.toString()}>
-                      {model.name}
+                  {filterModelsLoading ? (
+                    <SelectItem value="loading" disabled>
+                      Loading...
                     </SelectItem>
-                  ))}
+                  ) : filterModels.length === 0 && filterMakeId ? (
+                    <SelectItem value="empty" disabled>
+                      No models available
+                    </SelectItem>
+                  ) : (
+                    filterModels.map((model: CarModel) => (
+                      <SelectItem key={model.id} value={model.id.toString()}>
+                        {model.name}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -223,17 +428,25 @@ export default function CarVariants() {
         </div>
 
         {/* Table */}
-        <div className="rounded-lg border bg-card">
-          {isLoading ? (
-            <div className="flex items-center justify-center h-64">
-              <Loader className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : data?.items && data.items.length > 0 ? (
+        {!filterModelId ? (
+          <div className="rounded-lg border bg-card p-8 text-center">
+            <p className="text-muted-foreground">
+              Please select a make and model to view variants
+            </p>
+          </div>
+        ) : (
+          <div className="rounded-lg border bg-card">
+            {isLoading ? (
+              <div className="flex items-center justify-center h-64">
+                <Loader className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : data?.items && data.items.length > 0 ? (
             <>
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Variant Name</TableHead>
+                    <TableHead>Default Alloy Size</TableHead>
                     <TableHead>Model</TableHead>
                     <TableHead>Make</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -245,6 +458,7 @@ export default function CarVariants() {
                       <TableCell className="font-medium">
                         {variant.name}
                       </TableCell>
+                      <TableCell>{variant.defaultAlloySize ? `${variant.defaultAlloySize}"` : "N/A"}</TableCell>
                       <TableCell>{variant.model?.name || "N/A"}</TableCell>
                       <TableCell>
                         {variant.model?.make?.name || "N/A"}
@@ -293,7 +507,8 @@ export default function CarVariants() {
               <p className="text-muted-foreground">No car variants found</p>
             </div>
           )}
-        </div>
+          </div>
+        )}
       </div>
     </MainLayout>
   );

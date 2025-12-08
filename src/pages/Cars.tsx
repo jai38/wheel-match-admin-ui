@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Search, Edit, Trash2, Loader } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
@@ -20,10 +20,27 @@ import type { Car } from "@/lib/api";
 export default function Cars() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [page, setPage] = useState(1);
   const limit = 10;
   
-  const { data, isLoading, error } = useCars({ page, limit, search: searchQuery });
+  // Debounce search query with 300ms delay
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+      // Reset page to 1 when search query changes
+      setPage(1);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Only include search in API call if it's not empty
+  const searchParams = debouncedSearchQuery.trim() 
+    ? { page, limit, search: debouncedSearchQuery.trim() }
+    : { page, limit };
+  
+  const { data, isLoading, error } = useCars(searchParams);
   const updateCar = useUpdateCar();
   const deleteCar = useDeleteCar();
 
@@ -142,7 +159,7 @@ export default function Cars() {
               {/* Pagination */}
               <div className="flex items-center justify-between p-4 border-t">
                 <p className="text-sm text-muted-foreground">
-                  Showing page {data.pagination.page} of {data.pagination.totalPages} ({data.pagination.total} total items)
+                  Showing page {data.pagination.currentPage || page} of {data.pagination.totalPages} ({data.pagination.totalItems} total items)
                 </p>
                 <div className="flex gap-2">
                   <Button

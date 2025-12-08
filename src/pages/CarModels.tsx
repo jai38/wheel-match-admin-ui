@@ -32,6 +32,8 @@ import { carsService } from "@/lib/api/services/cars";
 import type { CarModel, CarMake } from "@/lib/api";
 import { useToast } from "@/components/ui/use-toast";
 
+const STORAGE_KEY_MAKE = "carMaster_selectedMake";
+
 export default function CarModels() {
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState({ name: "", makeId: "" });
@@ -41,17 +43,39 @@ export default function CarModels() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
+  // Load saved makeId from localStorage on mount
+  useEffect(() => {
+    const savedMakeId = localStorage.getItem(STORAGE_KEY_MAKE);
+    if (savedMakeId) {
+      setFilterMakeId(savedMakeId);
+    }
+  }, []);
+
+  // Save makeId to localStorage when filter changes
+  useEffect(() => {
+    if (filterMakeId) {
+      localStorage.setItem(STORAGE_KEY_MAKE, filterMakeId);
+    }
+  }, [filterMakeId]);
+
   // Fetch makes for dropdown
-  const { data: makesData } = useQuery({
+  const {
+    data: makesData,
+    isLoading: makesLoading,
+    error: makesError,
+  } = useQuery({
     queryKey: ["carMakesForSelect"],
-    queryFn: () => carsService.getMakes({ limit: 1000 }),
+    queryFn: () => carsService.getMakes({ limit: 100 }),
   });
+
+  const makes = makesData?.items || [];
 
   // Fetch models filtered by selected make
   const { data, isLoading, error } = useQuery({
     queryKey: ["carModels", page, filterMakeId],
-    queryFn: () => carsService.getModels({ page, limit, makeId: filterMakeId ? parseInt(filterMakeId) : undefined }),
-    enabled: !filterMakeId || parseInt(filterMakeId) > 0,
+    queryFn: () =>
+      carsService.getModels({ page, limit, makeId: parseInt(filterMakeId) }),
+    enabled: !!filterMakeId && parseInt(filterMakeId) > 0,
   });
 
   // Create mutation
@@ -82,7 +106,11 @@ export default function CarModels() {
   };
 
   const handleOpenChange = (open: boolean) => {
-    if (!open) {
+    if (open) {
+      // Pre-fill form with saved makeId when opening dialog
+      const savedMakeId = localStorage.getItem(STORAGE_KEY_MAKE);
+      setFormData({ name: "", makeId: savedMakeId || "" });
+    } else {
       setFormData({ name: "", makeId: "" });
     }
     setIsOpen(open);
@@ -157,11 +185,25 @@ export default function CarModels() {
                       <SelectValue placeholder="Select a make" />
                     </SelectTrigger>
                     <SelectContent>
-                      {makesData?.items?.map((make: CarMake) => (
-                        <SelectItem key={make.id} value={make.id.toString()}>
-                          {make.name}
+                      {makesLoading ? (
+                        <SelectItem value="loading" disabled>
+                          Loading...
                         </SelectItem>
-                      ))}
+                      ) : makesError ? (
+                        <SelectItem value="error" disabled>
+                          Error loading makes
+                        </SelectItem>
+                      ) : makes.length === 0 ? (
+                        <SelectItem value="empty" disabled>
+                          No makes available
+                        </SelectItem>
+                      ) : (
+                        makes.map((make: CarMake) => (
+                          <SelectItem key={make.id} value={make.id.toString()}>
+                            {make.name}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -177,18 +219,38 @@ export default function CarModels() {
         <div className="bg-card rounded-lg border p-4">
           <div className="flex items-center gap-4">
             <div className="flex-1 max-w-xs">
-              <Label htmlFor="filterMake" className="text-sm">Filter by Make</Label>
-              <Select value={filterMakeId} onValueChange={setFilterMakeId}>
+              <Label htmlFor="filterMake" className="text-sm">
+                Filter by Make
+              </Label>
+              <Select
+                value={filterMakeId}
+                onValueChange={(value) => {
+                  setFilterMakeId(value);
+                  setPage(1);
+                }}>
                 <SelectTrigger id="filterMake">
-                  <SelectValue placeholder="All Makes" />
+                  <SelectValue placeholder="Select a make" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Makes</SelectItem>
-                  {makesData?.items?.map((make: CarMake) => (
-                    <SelectItem key={make.id} value={make.id.toString()}>
-                      {make.name}
+                  {makesLoading ? (
+                    <SelectItem value="loading" disabled>
+                      Loading...
                     </SelectItem>
-                  ))}
+                  ) : makesError ? (
+                    <SelectItem value="error" disabled>
+                      Error loading makes
+                    </SelectItem>
+                  ) : makes.length === 0 ? (
+                    <SelectItem value="empty" disabled>
+                      No makes available
+                    </SelectItem>
+                  ) : (
+                    makes.map((make: CarMake) => (
+                      <SelectItem key={make.id} value={make.id.toString()}>
+                        {make.name}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -196,73 +258,81 @@ export default function CarModels() {
         </div>
 
         {/* Table */}
-        <div className="rounded-lg border bg-card">
-          {isLoading ? (
-            <div className="flex items-center justify-center h-64">
-              <Loader className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : data?.items && data.items.length > 0 ? (
-            <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Model Name</TableHead>
-                    <TableHead>Make</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {data.items.map((model) => (
-                    <TableRow key={model.id}>
-                      <TableCell className="font-medium">
-                        {model.name}
-                      </TableCell>
-                      <TableCell>{model.make?.name || "N/A"}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="icon" disabled>
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" disabled>
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-              {/* Pagination */}
-              <div className="flex items-center justify-between p-4 border-t">
-                <p className="text-sm text-muted-foreground">
-                  Showing page {paginationData.currentPage} of{" "}
-                  {paginationData.totalPages} ({paginationData.totalItems} total
-                  items)
-                </p>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage(Math.max(1, page - 1))}
-                    disabled={page === 1}>
-                    Previous
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage(page + 1)}
-                    disabled={page >= paginationData.totalPages}>
-                    Next
-                  </Button>
-                </div>
+        {!filterMakeId ? (
+          <div className="rounded-lg border bg-card p-8 text-center">
+            <p className="text-muted-foreground">
+              Please select a make to view models
+            </p>
+          </div>
+        ) : (
+          <div className="rounded-lg border bg-card">
+            {isLoading ? (
+              <div className="flex items-center justify-center h-64">
+                <Loader className="h-8 w-8 animate-spin text-primary" />
               </div>
-            </>
-          ) : (
-            <div className="flex items-center justify-center h-64">
-              <p className="text-muted-foreground">No car models found</p>
-            </div>
-          )}
-        </div>
+            ) : data?.items && data.items.length > 0 ? (
+              <>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Model Name</TableHead>
+                      <TableHead>Make</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {data.items.map((model) => (
+                      <TableRow key={model.id}>
+                        <TableCell className="font-medium">
+                          {model.name}
+                        </TableCell>
+                        <TableCell>{model.make?.name || "N/A"}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button variant="ghost" size="icon" disabled>
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" disabled>
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                {/* Pagination */}
+                <div className="flex items-center justify-between p-4 border-t">
+                  <p className="text-sm text-muted-foreground">
+                    Showing page {paginationData.currentPage} of{" "}
+                    {paginationData.totalPages} ({paginationData.totalItems}{" "}
+                    total items)
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage(Math.max(1, page - 1))}
+                      disabled={page === 1}>
+                      Previous
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage(page + 1)}
+                      disabled={page >= paginationData.totalPages}>
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center justify-center h-64">
+                <p className="text-muted-foreground">No car models found</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </MainLayout>
   );

@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Search, Edit, Trash2, Loader } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Loader, Car } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import {
   Table,
   TableBody,
@@ -13,7 +12,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useAlloys, useUpdateAlloy, useDeleteAlloy } from "@/hooks/useAlloys";
+import { useAlloys, useDeleteAlloy } from "@/hooks/useAlloys";
+import { CarListModal } from "@/components/CarListModal";
 import type { Alloy } from "@/lib/api";
 
 export default function Alloys() {
@@ -21,29 +21,25 @@ export default function Alloys() {
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
   const limit = 10;
+  const [selectedAlloyId, setSelectedAlloyId] = useState<number | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const { data, isLoading, error } = useAlloys({
     page,
     limit,
     search: searchQuery,
   });
-  const updateAlloy = useUpdateAlloy();
   const deleteAlloy = useDeleteAlloy();
-
-  const handleToggleActive = (
-    alloyId: number,
-    currentStatus: boolean | undefined,
-  ) => {
-    updateAlloy.mutate({
-      id: alloyId,
-      data: { isActive: !currentStatus },
-    });
-  };
 
   const handleDelete = (alloyId: number) => {
     if (confirm("Are you sure you want to delete this alloy?")) {
       deleteAlloy.mutate(alloyId);
     }
+  };
+
+  const openModal = (alloyId: number) => {
+    setSelectedAlloyId(alloyId);
+    setIsModalOpen(true);
   };
 
   if (error) {
@@ -63,7 +59,7 @@ export default function Alloys() {
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Alloy Master</h1>
             <p className="text-muted-foreground mt-1">
-              Manage alloy wheels, finishes, and fitment mappings
+              Manage alloy wheels, finishes, and compatible cars
             </p>
           </div>
           <Button onClick={() => navigate("/alloys/new")}>
@@ -101,7 +97,7 @@ export default function Alloys() {
                     <TableHead>PCD</TableHead>
                     <TableHead>Finish</TableHead>
                     <TableHead>Size</TableHead>
-                    <TableHead>Active</TableHead>
+                    <TableHead>Mapped Cars</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -116,13 +112,14 @@ export default function Alloys() {
                       <TableCell>{alloy.finish?.name || "N/A"}</TableCell>
                       <TableCell>{alloy.size?.specs || "N/A"}</TableCell>
                       <TableCell>
-                        <Switch
-                          checked={alloy.isActive || false}
-                          onCheckedChange={() =>
-                            handleToggleActive(alloy.id, alloy.isActive)
-                          }
-                          disabled={updateAlloy.isPending}
-                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openModal(alloy.id)}
+                        >
+                          <Car className="h-4 w-4 mr-2" />
+                          Manage
+                        </Button>
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
@@ -177,6 +174,13 @@ export default function Alloys() {
           )}
         </div>
       </div>
+      {selectedAlloyId && (
+        <CarListModal
+          alloyId={selectedAlloyId}
+          open={isModalOpen}
+          onOpenChange={setIsModalOpen}
+        />
+      )}
     </MainLayout>
   );
 }
