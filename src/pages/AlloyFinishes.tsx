@@ -75,7 +75,9 @@ export default function AlloyFinishes() {
     return (
       <MainLayout>
         <div className="flex items-center justify-center h-64">
-          <p className="text-red-500">Error loading alloy finishes: {error.message}</p>
+          <p className="text-red-500">
+            Error loading alloy finishes: {error.message}
+          </p>
         </div>
       </MainLayout>
     );
@@ -95,7 +97,9 @@ export default function AlloyFinishes() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Alloy Finishes</h1>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Alloy Finishes
+            </h1>
             <p className="text-muted-foreground mt-1">
               Manage alloy wheel finish types
             </p>
@@ -159,17 +163,19 @@ export default function AlloyFinishes() {
                   <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead>Description</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    {/* <TableHead className="text-right">Actions</TableHead> */}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {data.items.map((finish) => (
                     <TableRow key={finish.id}>
-                      <TableCell className="font-medium">{finish.name}</TableCell>
+                      <TableCell className="font-medium">
+                        {finish.name}
+                      </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
                         {finish.description || "N/A"}
                       </TableCell>
-                      <TableCell className="text-right">
+                      {/* <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button variant="ghost" size="icon" disabled>
                             <Edit className="h-4 w-4" />
@@ -178,7 +184,7 @@ export default function AlloyFinishes() {
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </div>
-                      </TableCell>
+                      </TableCell> */}
                     </TableRow>
                   ))}
                 </TableBody>
@@ -195,16 +201,14 @@ export default function AlloyFinishes() {
                     variant="outline"
                     size="sm"
                     onClick={() => setPage(Math.max(1, page - 1))}
-                    disabled={page === 1}
-                  >
+                    disabled={page === 1}>
                     Previous
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setPage(page + 1)}
-                    disabled={page >= paginationData.totalPages}
-                  >
+                    disabled={page >= paginationData.totalPages}>
                     Next
                   </Button>
                 </div>

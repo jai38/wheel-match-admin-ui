@@ -277,7 +277,7 @@ export default function CarModels() {
                     <TableRow>
                       <TableHead>Model Name</TableHead>
                       <TableHead>Make</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      {/* <TableHead className="text-right">Actions</TableHead> */}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -287,7 +287,7 @@ export default function CarModels() {
                           {model.name}
                         </TableCell>
                         <TableCell>{model.make?.name || "N/A"}</TableCell>
-                        <TableCell className="text-right">
+                        {/* <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Button variant="ghost" size="icon" disabled>
                               <Edit className="h-4 w-4" />
@@ -296,7 +296,7 @@ export default function CarModels() {
                               <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>
                           </div>
-                        </TableCell>
+                        </TableCell> */}
                       </TableRow>
                     ))}
                   </TableBody>

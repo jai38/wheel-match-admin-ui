@@ -75,7 +75,9 @@ export default function AlloyDesigns() {
     return (
       <MainLayout>
         <div className="flex items-center justify-center h-64">
-          <p className="text-red-500">Error loading alloy designs: {error.message}</p>
+          <p className="text-red-500">
+            Error loading alloy designs: {error.message}
+          </p>
         </div>
       </MainLayout>
     );
@@ -159,17 +161,19 @@ export default function AlloyDesigns() {
                   <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead>Description</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    {/* <TableHead className="text-right">Actions</TableHead> */}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {data.items.map((design) => (
                     <TableRow key={design.id}>
-                      <TableCell className="font-medium">{design.name}</TableCell>
+                      <TableCell className="font-medium">
+                        {design.name}
+                      </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
                         {design.description || "N/A"}
                       </TableCell>
-                      <TableCell className="text-right">
+                      {/* <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button variant="ghost" size="icon" disabled>
                             <Edit className="h-4 w-4" />
@@ -178,7 +182,7 @@ export default function AlloyDesigns() {
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </div>
-                      </TableCell>
+                      </TableCell> */}
                     </TableRow>
                   ))}
                 </TableBody>
@@ -195,16 +199,14 @@ export default function AlloyDesigns() {
                     variant="outline"
                     size="sm"
                     onClick={() => setPage(Math.max(1, page - 1))}
-                    disabled={page === 1}
-                  >
+                    disabled={page === 1}>
                     Previous
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setPage(page + 1)}
-                    disabled={page >= paginationData.totalPages}
-                  >
+                    disabled={page >= paginationData.totalPages}>
                     Next
                   </Button>
                 </div>

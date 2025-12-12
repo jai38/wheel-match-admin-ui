@@ -25,12 +25,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import {
   useAlloyDesigns,
@@ -53,6 +48,7 @@ export default function AlloyForm() {
 
   // Form data state
   const [formData, setFormData] = useState<AlloyCreateRequest>({
+    name: "",
     designId: 0,
     pcdId: 0,
     finishId: 0,
@@ -85,6 +81,7 @@ export default function AlloyForm() {
   useEffect(() => {
     if (isEdit && existingAlloy) {
       setFormData({
+        name: existingAlloy.name,
         designId: existingAlloy.designId,
         pcdId: existingAlloy.pcdId,
         finishId: existingAlloy.finishId,
@@ -92,6 +89,41 @@ export default function AlloyForm() {
       });
     }
   }, [existingAlloy, isEdit]);
+
+  // Auto-generate alloy name
+  useEffect(() => {
+    const { designId, pcdId, finishId, sizeId } = formData;
+
+    if (
+      designId &&
+      pcdId &&
+      finishId &&
+      sizeId &&
+      designsData &&
+      pcdsData &&
+      finishesData &&
+      sizesData
+    ) {
+      const design = designsData.items?.find((d) => d.id === designId);
+      const pcd = pcdsData.items?.find((p) => p.id === pcdId);
+      const finish = finishesData.items?.find((f) => f.id === finishId);
+      const size = sizesData.items?.find((s) => s.id === sizeId);
+
+      if (design && pcd && finish && size) {
+        const newName = `${size.specs} ${design.name} ${pcd.name} ${finish.name}`;
+        setFormData((prev) => ({ ...prev, name: newName }));
+      }
+    }
+  }, [
+    formData.designId,
+    formData.pcdId,
+    formData.finishId,
+    formData.sizeId,
+    designsData,
+    pcdsData,
+    finishesData,
+    sizesData,
+  ]);
 
   const handleSave = () => {
     if (
@@ -118,11 +150,28 @@ export default function AlloyForm() {
         },
       );
     } else {
-      createAlloy.mutate(formData, {
-        onSuccess: () => {
-          navigate("/alloys");
-        },
-      });
+      createAlloy
+        .mutateAsync(formData)
+        .then((newAlloy) => {
+          toast({
+            title: "Next Step: Upload Images",
+            description: `Alloy "${newAlloy.alloyName}" has been created.`,
+          });
+          if (newAlloy.id) {
+            navigate(`/alloys/${newAlloy.id}/images`);
+          } else {
+            toast({
+              title: "Error",
+              description:
+                "Could not get Alloy ID from the server. Cannot proceed to image upload.",
+              variant: "destructive",
+            });
+            navigate("/alloys");
+          }
+        })
+        .catch(() => {
+          // Error is handled by the hook's onError, but catch prevents unhandled promise rejection
+        });
     }
   };
 
@@ -164,155 +213,150 @@ export default function AlloyForm() {
           </div>
         </div>
 
-        <Tabs defaultValue="details" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+        {/* <Tabs defaultValue="details" className="w-full"> */}
+        {/* <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="details">Alloy Details</TabsTrigger>
             <TabsTrigger value="cars">Car List</TabsTrigger>
-          </TabsList>
+          </TabsList> */}
 
-          <TabsContent value="details">
-            <Card>
-              <CardHeader>
-                <CardTitle>Alloy Specifications</CardTitle>
-                <CardDescription>
-                  Select alloy specifications from available options
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {!designsData?.items || designsData.items.length === 0 ? (
-                  <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800">
-                    <p className="font-medium">⚠️ No alloy data available</p>
-                    <p className="text-sm mt-1">
-                      Please create alloy designs, PCDs, finishes, and sizes
-                      from the backend admin panel first.
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    <div className="space-y-2">
-                      <Label htmlFor="design">Design *</Label>
-                      <Select
-                        value={formData.designId.toString()}
-                        onValueChange={(value) =>
-                          setFormData({
-                            ...formData,
-                            designId: parseInt(value),
-                          })
-                        }>
-                        <SelectTrigger id="design" disabled={designsLoading}>
-                          <SelectValue placeholder="Select a design" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {designsData?.items?.map((design) => (
-                            <SelectItem
-                              key={design.id}
-                              value={design.id.toString()}>
-                              {design.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+        {/* <TabsContent value="details"> */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Alloy Specifications</CardTitle>
+            <CardDescription>
+              Select alloy specifications from available options
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {!designsData?.items || designsData.items.length === 0 ? (
+              <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800">
+                <p className="font-medium">⚠️ No alloy data available</p>
+                <p className="text-sm mt-1">
+                  Please create alloy designs, PCDs, finishes, and sizes from
+                  the backend admin panel first.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="design">Design *</Label>
+                  <Select
+                    value={formData.designId.toString()}
+                    onValueChange={(value) =>
+                      setFormData({
+                        ...formData,
+                        designId: parseInt(value),
+                      })
+                    }>
+                    <SelectTrigger id="design" disabled={designsLoading}>
+                      <SelectValue placeholder="Select a design" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {designsData?.items?.map((design) => (
+                        <SelectItem
+                          key={design.id}
+                          value={design.id.toString()}>
+                          {design.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="pcd">PCD (Bolt Pattern) *</Label>
+                  {!pcdsData?.items || pcdsData.items.length === 0 ? (
+                    <div className="p-2 bg-gray-100 rounded text-sm text-gray-600">
+                      No PCDs available
                     </div>
+                  ) : (
+                    <Select
+                      value={formData.pcdId.toString()}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, pcdId: parseInt(value) })
+                      }>
+                      <SelectTrigger id="pcd" disabled={pcdsLoading}>
+                        <SelectValue placeholder="Select a PCD" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {pcdsData?.items?.map((pcd) => (
+                          <SelectItem key={pcd.id} value={pcd.id.toString()}>
+                            {pcd.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="pcd">PCD (Bolt Pattern) *</Label>
-                      {!pcdsData?.items || pcdsData.items.length === 0 ? (
-                        <div className="p-2 bg-gray-100 rounded text-sm text-gray-600">
-                          No PCDs available
-                        </div>
-                      ) : (
-                        <Select
-                          value={formData.pcdId.toString()}
-                          onValueChange={(value) =>
-                            setFormData({ ...formData, pcdId: parseInt(value) })
-                          }>
-                          <SelectTrigger id="pcd" disabled={pcdsLoading}>
-                            <SelectValue placeholder="Select a PCD" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {pcdsData?.items?.map((pcd) => (
-                              <SelectItem
-                                key={pcd.id}
-                                value={pcd.id.toString()}>
-                                {pcd.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
+                <div className="space-y-2">
+                  <Label htmlFor="finish">Finish *</Label>
+                  {!finishesData?.items || finishesData.items.length === 0 ? (
+                    <div className="p-2 bg-gray-100 rounded text-sm text-gray-600">
+                      No finishes available
                     </div>
+                  ) : (
+                    <Select
+                      value={formData.finishId.toString()}
+                      onValueChange={(value) =>
+                        setFormData({
+                          ...formData,
+                          finishId: parseInt(value),
+                        })
+                      }>
+                      <SelectTrigger id="finish" disabled={finishesLoading}>
+                        <SelectValue placeholder="Select a finish" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {finishesData?.items?.map((finish) => (
+                          <SelectItem
+                            key={finish.id}
+                            value={finish.id.toString()}>
+                            {finish.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="finish">Finish *</Label>
-                      {!finishesData?.items ||
-                      finishesData.items.length === 0 ? (
-                        <div className="p-2 bg-gray-100 rounded text-sm text-gray-600">
-                          No finishes available
-                        </div>
-                      ) : (
-                        <Select
-                          value={formData.finishId.toString()}
-                          onValueChange={(value) =>
-                            setFormData({
-                              ...formData,
-                              finishId: parseInt(value),
-                            })
-                          }>
-                          <SelectTrigger id="finish" disabled={finishesLoading}>
-                            <SelectValue placeholder="Select a finish" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {finishesData?.items?.map((finish) => (
-                              <SelectItem
-                                key={finish.id}
-                                value={finish.id.toString()}>
-                                {finish.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
+                <div className="space-y-2">
+                  <Label htmlFor="size">
+                    Size (Diameter x Width ET Offset) *
+                  </Label>
+                  {!sizesData?.items || sizesData.items.length === 0 ? (
+                    <div className="p-2 bg-gray-100 rounded text-sm text-gray-600">
+                      No sizes available
                     </div>
+                  ) : (
+                    <Select
+                      value={formData.sizeId.toString()}
+                      onValueChange={(value) =>
+                        setFormData({
+                          ...formData,
+                          sizeId: parseInt(value),
+                        })
+                      }>
+                      <SelectTrigger id="size" disabled={sizesLoading}>
+                        <SelectValue placeholder="Select a size" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {sizesData?.items?.map((size) => (
+                          <SelectItem key={size.id} value={size.id.toString()}>
+                            {size.specs}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+        {/* </TabsContent> */}
 
-                    <div className="space-y-2">
-                      <Label htmlFor="size">
-                        Size (Diameter x Width ET Offset) *
-                      </Label>
-                      {!sizesData?.items || sizesData.items.length === 0 ? (
-                        <div className="p-2 bg-gray-100 rounded text-sm text-gray-600">
-                          No sizes available
-                        </div>
-                      ) : (
-                        <Select
-                          value={formData.sizeId.toString()}
-                          onValueChange={(value) =>
-                            setFormData({
-                              ...formData,
-                              sizeId: parseInt(value),
-                            })
-                          }>
-                          <SelectTrigger id="size" disabled={sizesLoading}>
-                            <SelectValue placeholder="Select a size" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {sizesData?.items?.map((size) => (
-                              <SelectItem
-                                key={size.id}
-                                value={size.id.toString()}>
-                                {size.specs}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
-                    </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="cars">
+        {/* <TabsContent value="cars">
             <Card>
               <CardHeader>
                 <CardTitle>Compatible Vehicles</CardTitle>
@@ -327,8 +371,8 @@ export default function AlloyForm() {
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
-        </Tabs>
+          </TabsContent> */}
+        {/* </Tabs> */}
 
         <div className="flex justify-end gap-4">
           <Button

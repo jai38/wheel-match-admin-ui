@@ -180,7 +180,7 @@ export interface AlloySize {
 // Full Alloy Entity
 export interface Alloy {
   id: number;
-  name: string; // Auto-generated: "{specs} {design} {pcd} {finish}"
+  alloyName: string; // Auto-generated: "{specs} {design} {pcd} {finish}"
   designId: number;
   pcdId: number;
   finishId: number;
@@ -196,6 +196,7 @@ export interface Alloy {
 }
 
 export interface AlloyCreateRequest {
+  name: string; // Auto-generated: "{specs} {design} {pcd} {finish}"
   designId: number;
   pcdId: number;
   finishId: number;

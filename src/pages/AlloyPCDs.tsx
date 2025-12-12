@@ -147,14 +147,14 @@ export default function AlloyPCDs() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>PCD Value</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    {/* <TableHead className="text-right">Actions</TableHead> */}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {data.items.map((pcd) => (
                     <TableRow key={pcd.id}>
                       <TableCell className="font-medium">{pcd.name}</TableCell>
-                      <TableCell className="text-right">
+                      {/* <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button variant="ghost" size="icon" disabled>
                             <Edit className="h-4 w-4" />
@@ -163,7 +163,7 @@ export default function AlloyPCDs() {
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </div>
-                      </TableCell>
+                      </TableCell> */}
                     </TableRow>
                   ))}
                 </TableBody>

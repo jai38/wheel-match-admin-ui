@@ -129,22 +129,35 @@ export default function CarColors() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="colorCode">Hex Code (Optional)</Label>
+                  <Label htmlFor="colorCode">
+                    Hex Code (Select from swatch)
+                  </Label>
                   <div className="flex gap-2">
+                    {/* this should be a color swatch not the input text */}
                     <Input
                       id="colorCode"
                       placeholder="e.g., #FF0000"
                       value={formData.colorCode}
+                      disabled
                       onChange={(e) =>
                         setFormData({ ...formData, colorCode: e.target.value })
                       }
+                    />{" "}
+                    <Input
+                      type="color"
+                      value={formData.colorCode || "#FFFFFF"}
+                      onChange={(e) =>
+                        setFormData({ ...formData, colorCode: e.target.value })
+                      }
+                      className="w-12 h-10 p-1 cursor-pointer"
+                      title="Pick a color"
                     />
-                    {formData.colorCode && (
+                    {/* {formData.colorCode && (
                       <div
                         className="w-10 h-10 rounded border"
                         style={{ backgroundColor: formData.colorCode }}
                       />
-                    )}
+                    )} */}
                   </div>
                 </div>
                 <Button type="submit" disabled={createMutation.isPending}>

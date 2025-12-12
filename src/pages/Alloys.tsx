@@ -105,7 +105,7 @@ export default function Alloys() {
                   {data.items.map((alloy) => (
                     <TableRow key={alloy.id}>
                       <TableCell className="font-medium">
-                        {alloy.name}
+                        {alloy.alloyName}
                       </TableCell>
                       <TableCell>{alloy.design?.name || "N/A"}</TableCell>
                       <TableCell>{alloy.pcd?.name || "N/A"}</TableCell>
@@ -115,8 +115,7 @@ export default function Alloys() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => openModal(alloy.id)}
-                        >
+                          onClick={() => openModal(alloy.id)}>
                           <Car className="h-4 w-4 mr-2" />
                           Manage
                         </Button>

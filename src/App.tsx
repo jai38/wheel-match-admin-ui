@@ -11,6 +11,7 @@ import Cars from "./pages/Cars";
 import CarForm from "./pages/CarForm";
 import Alloys from "./pages/Alloys";
 import AlloyForm from "./pages/AlloyForm";
+import AlloyImagesForm from "./pages/AlloyImagesForm";
 import CarMakes from "./pages/CarMakes";
 import CarModels from "./pages/CarModels";
 import CarColors from "./pages/CarColors";
@@ -86,6 +87,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <AlloyForm />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/alloys/:id/images"
+            element={
+              <ProtectedRoute>
+                <AlloyImagesForm />
               </ProtectedRoute>
             }
           />

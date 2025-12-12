@@ -71,7 +71,6 @@ export const useCreateAlloy = () => {
     mutationFn: (data: AlloyCreateRequest) => alloysService.createAlloy(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["alloys"] });
-      toast.success("Alloy created successfully");
     },
     onError: (error: { message?: string }) => {
       toast.error(error.message || "Failed to create alloy");
@@ -107,6 +106,23 @@ export const useDeleteAlloy = () => {
     },
     onError: (error: { message?: string }) => {
       toast.error(error.message || "Failed to delete alloy");
+    },
+  });
+};
+
+export const useUploadAlloyImages = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, images }: { id: number; images: File[] }) =>
+      alloysService.uploadAlloyImages(id, images),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["alloys"] });
+      queryClient.invalidateQueries({ queryKey: ["alloy", variables.id] });
+      toast.success("Alloy images uploaded successfully");
+    },
+    onError: (error: { message?: string }) => {
+      toast.error(error.message || "Failed to upload alloy images");
     },
   });
 };

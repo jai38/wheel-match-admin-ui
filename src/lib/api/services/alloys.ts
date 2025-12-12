@@ -162,6 +162,27 @@ export const alloysService = {
     await apiClient.delete<ApiResponse>(`/admin/alloys/${id}`);
   },
 
+  /**
+   * Upload images for an alloy
+   */
+  async uploadAlloyImages(id: number, images: File[]): Promise<Alloy> {
+    const formData = new FormData();
+    images.forEach((image) => {
+      formData.append("images", image);
+    });
+
+    const response = await apiClient.post<ApiResponse<Alloy>>(
+      `/admin/alloys/${id}/images`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    return response.data.data!;
+  },
+
   // ========== Alloy - Car Mappings ==========
 
   /**

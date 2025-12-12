@@ -72,6 +72,13 @@ export default function CarMakes() {
     setIsOpen(open);
   };
 
+  const generateSlug = (name: string) => {
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "-")
+      .replace(/-+/g, "-");
+  };
+
   if (error) {
     return (
       <MainLayout>
@@ -125,7 +132,11 @@ export default function CarMakes() {
                     placeholder="e.g., Toyota"
                     value={formData.name}
                     onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
+                      setFormData({
+                        ...formData,
+                        name: e.target.value,
+                        slug: generateSlug(e.target.value),
+                      })
                     }
                     required
                   />
@@ -136,10 +147,7 @@ export default function CarMakes() {
                     id="slug"
                     placeholder="e.g., toyota"
                     value={formData.slug}
-                    onChange={(e) =>
-                      setFormData({ ...formData, slug: e.target.value })
-                    }
-                    required
+                    disabled
                   />
                 </div>
                 <Button type="submit" disabled={createMutation.isPending}>
@@ -163,7 +171,7 @@ export default function CarMakes() {
                   <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead>Slug</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    {/* <TableHead className="text-right">Actions</TableHead> */}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -171,7 +179,7 @@ export default function CarMakes() {
                     <TableRow key={make.id}>
                       <TableCell className="font-medium">{make.name}</TableCell>
                       <TableCell>{make.slug}</TableCell>
-                      <TableCell className="text-right">
+                      {/* <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button variant="ghost" size="icon" disabled>
                             <Edit className="h-4 w-4" />
@@ -180,7 +188,7 @@ export default function CarMakes() {
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </div>
-                      </TableCell>
+                      </TableCell> */}
                     </TableRow>
                   ))}
                 </TableBody>

@@ -37,12 +37,12 @@ const STORAGE_KEY_MODEL = "carMaster_selectedModel";
 
 export default function CarVariants() {
   const [isOpen, setIsOpen] = useState(false);
-  const [formData, setFormData] = useState({ 
-    name: "", 
-    makeId: "", 
-    modelId: "", 
+  const [formData, setFormData] = useState({
+    name: "",
+    makeId: "",
+    modelId: "",
     defaultAlloySize: "",
-    isActive: true 
+    isActive: true,
   });
   const [filterMakeId, setFilterMakeId] = useState<string>("");
   const [filterModelId, setFilterModelId] = useState<string>("");
@@ -90,10 +90,7 @@ export default function CarVariants() {
   const makes = makesData?.items || [];
 
   // Fetch models filtered by selected make (for filter)
-  const {
-    data: filterModelsData,
-    isLoading: filterModelsLoading,
-  } = useQuery({
+  const { data: filterModelsData, isLoading: filterModelsLoading } = useQuery({
     queryKey: ["carModelsForSelect", filterMakeId],
     queryFn: () =>
       carsService.getModels({
@@ -106,10 +103,7 @@ export default function CarVariants() {
   const filterModels = filterModelsData?.items || [];
 
   // Fetch models for Add Variant dialog (filtered by selected make in form)
-  const {
-    data: formModelsData,
-    isLoading: formModelsLoading,
-  } = useQuery({
+  const { data: formModelsData, isLoading: formModelsLoading } = useQuery({
     queryKey: ["carModelsForForm", formData.makeId],
     queryFn: () =>
       carsService.getModels({
@@ -135,11 +129,21 @@ export default function CarVariants() {
 
   // Create mutation
   const createMutation = useMutation({
-    mutationFn: (newVariant: { name: string; modelId: number; defaultAlloySize: number; isActive?: boolean }) =>
-      carsService.createVariant(newVariant),
+    mutationFn: (newVariant: {
+      name: string;
+      modelId: number;
+      defaultAlloySize: number;
+      isActive?: boolean;
+    }) => carsService.createVariant(newVariant),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["carVariants"] });
-      setFormData({ name: "", makeId: "", modelId: "", defaultAlloySize: "", isActive: true });
+      setFormData({
+        name: "",
+        makeId: "",
+        modelId: "",
+        defaultAlloySize: "",
+        isActive: true,
+      });
       setIsOpen(false);
       toast({ title: "Car Variant created successfully" });
     },
@@ -176,15 +180,21 @@ export default function CarVariants() {
       // Pre-fill form with saved makeId and modelId when opening dialog
       const savedMakeId = localStorage.getItem(STORAGE_KEY_MAKE);
       const savedModelId = localStorage.getItem(STORAGE_KEY_MODEL);
-      setFormData({ 
-        name: "", 
-        makeId: savedMakeId || "", 
-        modelId: savedModelId || "", 
-        defaultAlloySize: "", 
-        isActive: true 
+      setFormData({
+        name: "",
+        makeId: savedMakeId || "",
+        modelId: savedModelId || "",
+        defaultAlloySize: "",
+        isActive: true,
       });
     } else {
-      setFormData({ name: "", makeId: "", modelId: "", defaultAlloySize: "", isActive: true });
+      setFormData({
+        name: "",
+        makeId: "",
+        modelId: "",
+        defaultAlloySize: "",
+        isActive: true,
+      });
     }
     setIsOpen(open);
   };
@@ -319,7 +329,9 @@ export default function CarVariants() {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="defaultAlloySize">Default Alloy Size (inches)</Label>
+                  <Label htmlFor="defaultAlloySize">
+                    Default Alloy Size (inches)
+                  </Label>
                   <Input
                     id="defaultAlloySize"
                     type="number"
@@ -329,7 +341,10 @@ export default function CarVariants() {
                     placeholder="e.g., 17.5"
                     value={formData.defaultAlloySize}
                     onChange={(e) =>
-                      setFormData({ ...formData, defaultAlloySize: e.target.value })
+                      setFormData({
+                        ...formData,
+                        defaultAlloySize: e.target.value,
+                      })
                     }
                     required
                   />
@@ -339,7 +354,11 @@ export default function CarVariants() {
                 </div>
                 <Button
                   type="submit"
-                  disabled={createMutation.isPending || !formData.modelId || !formData.defaultAlloySize}>
+                  disabled={
+                    createMutation.isPending ||
+                    !formData.modelId ||
+                    !formData.defaultAlloySize
+                  }>
                   {createMutation.isPending ? "Creating..." : "Create"}
                 </Button>
               </form>
@@ -441,29 +460,33 @@ export default function CarVariants() {
                 <Loader className="h-8 w-8 animate-spin text-primary" />
               </div>
             ) : data?.items && data.items.length > 0 ? (
-            <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Variant Name</TableHead>
-                    <TableHead>Default Alloy Size</TableHead>
-                    <TableHead>Model</TableHead>
-                    <TableHead>Make</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {data.items.map((variant) => (
-                    <TableRow key={variant.id}>
-                      <TableCell className="font-medium">
-                        {variant.name}
-                      </TableCell>
-                      <TableCell>{variant.defaultAlloySize ? `${variant.defaultAlloySize}"` : "N/A"}</TableCell>
-                      <TableCell>{variant.model?.name || "N/A"}</TableCell>
-                      <TableCell>
-                        {variant.model?.make?.name || "N/A"}
-                      </TableCell>
-                      <TableCell className="text-right">
+              <>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Variant Name</TableHead>
+                      <TableHead>Default Alloy Size</TableHead>
+                      <TableHead>Model</TableHead>
+                      <TableHead>Make</TableHead>
+                      {/* <TableHead className="text-right">Actions</TableHead> */}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {data.items.map((variant) => (
+                      <TableRow key={variant.id}>
+                        <TableCell className="font-medium">
+                          {variant.name}
+                        </TableCell>
+                        <TableCell>
+                          {variant.defaultAlloySize
+                            ? `${variant.defaultAlloySize}"`
+                            : "N/A"}
+                        </TableCell>
+                        <TableCell>{variant.model?.name || "N/A"}</TableCell>
+                        <TableCell>
+                          {variant.model?.make?.name || "N/A"}
+                        </TableCell>
+                        {/* <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button variant="ghost" size="icon" disabled>
                             <Edit className="h-4 w-4" />
@@ -472,41 +495,41 @@ export default function CarVariants() {
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-              {/* Pagination */}
-              <div className="flex items-center justify-between p-4 border-t">
-                <p className="text-sm text-muted-foreground">
-                  Showing page {paginationData.currentPage} of{" "}
-                  {paginationData.totalPages} ({paginationData.totalItems} total
-                  items)
-                </p>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage(Math.max(1, page - 1))}
-                    disabled={page === 1}>
-                    Previous
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage(page + 1)}
-                    disabled={page >= paginationData.totalPages}>
-                    Next
-                  </Button>
+                      </TableCell> */}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                {/* Pagination */}
+                <div className="flex items-center justify-between p-4 border-t">
+                  <p className="text-sm text-muted-foreground">
+                    Showing page {paginationData.currentPage} of{" "}
+                    {paginationData.totalPages} ({paginationData.totalItems}{" "}
+                    total items)
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage(Math.max(1, page - 1))}
+                      disabled={page === 1}>
+                      Previous
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage(page + 1)}
+                      disabled={page >= paginationData.totalPages}>
+                      Next
+                    </Button>
+                  </div>
                 </div>
+              </>
+            ) : (
+              <div className="flex items-center justify-center h-64">
+                <p className="text-muted-foreground">No car variants found</p>
               </div>
-            </>
-          ) : (
-            <div className="flex items-center justify-center h-64">
-              <p className="text-muted-foreground">No car variants found</p>
-            </div>
-          )}
+            )}
           </div>
         )}
       </div>

@@ -216,7 +216,7 @@ export default function AlloySizes() {
                     <TableHead>Diameter</TableHead>
                     <TableHead>Width</TableHead>
                     <TableHead>Offset</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    {/* <TableHead className="text-right">Actions</TableHead> */}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -228,7 +228,7 @@ export default function AlloySizes() {
                       <TableCell>{size.diameter}"</TableCell>
                       <TableCell>{size.width}"</TableCell>
                       <TableCell>ET{size.offset}</TableCell>
-                      <TableCell className="text-right">
+                      {/* <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button variant="ghost" size="icon" disabled>
                             <Edit className="h-4 w-4" />
@@ -237,7 +237,7 @@ export default function AlloySizes() {
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </div>
-                      </TableCell>
+                      </TableCell> */}
                     </TableRow>
                   ))}
                 </TableBody>
