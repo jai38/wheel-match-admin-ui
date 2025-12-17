@@ -107,7 +107,11 @@ export interface Car {
   isActive?: boolean;
   variant?: CarVariant & { model?: CarModel & { make?: CarMake } };
   color?: CarColor;
-  wheelCoordinates?: WheelCoordinates;
+  x_front?: number;
+  y_front?: number;
+  x_rear?: number;
+  y_rear?: number;
+  wheelSize?: number;
   createdAt?: string;
   updatedAt?: string;
   // For creation/update
@@ -115,14 +119,6 @@ export interface Car {
   modelId?: number;
   make?: CarMake;
   model?: CarModel;
-  carImages?: string[];
-}
-
-export interface WheelCoordinates {
-  front?: { x: number; y: number; width: number; height: number };
-  side?: { x: number; y: number; width: number; height: number };
-  rear?: { x: number; y: number; width: number; height: number };
-  threeFourth?: { x: number; y: number; width: number; height: number };
 }
 
 export interface CarCreateRequest {
@@ -130,8 +126,12 @@ export interface CarCreateRequest {
   modelId: number;
   colorId: number;
   variantId: number;
-  carImages?: string[];
-  wheelCoordinates?: WheelCoordinates;
+  carImage?: string;
+  x_front: number;
+  y_front: number;
+  x_rear: number;
+  y_rear: number;
+  wheelSize: number;
   isActive?: boolean;
 }
 

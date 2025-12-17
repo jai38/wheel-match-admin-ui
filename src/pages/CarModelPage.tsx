@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -24,25 +23,26 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { Badge } from "@/components/ui/badge";
-import { Make, Model } from "@/lib/types";
-import { getMakes, getModelsByMake } from "@/lib/api";
+import { carsService } from "@/lib/api";
+import { CarMake, CarModel } from "@/lib/api/types";
 import { toast } from "sonner";
 
 export default function CarModelPage() {
-  const [makes, setMakes] = useState<Make[]>([]);
-  const [models, setModels] = useState<Model[]>([]);
+  const [makes, setMakes] = useState<CarMake[]>([]);
+  const [models, setModels] = useState<CarModel[]>([]);
   const [selectedMake, setSelectedMake] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const modelsPerPage = 5;
+  const modelsPerPage = 10;
 
   useEffect(() => {
     const fetchMakes = async () => {
       try {
-        const data = await getMakes();
-        setMakes(data);
+        const response = await carsService.getMakes({ limit: 1000 });
+        if(response.items) {
+          setMakes(response.items);
+        }
       } catch (err) {
         setError("Failed to fetch makes.");
         toast.error("Failed to fetch makes.");
@@ -60,8 +60,10 @@ export default function CarModelPage() {
     setLoading(true);
     setError(null);
     try {
-      const data = await getModelsByMake(makeId);
-      setModels(data);
+      const response = await carsService.getModels({ makeId: parseInt(makeId, 10), limit: 1000 });
+      if(response.items) {
+        setModels(response.items);
+      }
     } catch (err) {
       setError("Failed to fetch models.");
       toast.error("Failed to fetch models.");
@@ -75,11 +77,6 @@ export default function CarModelPage() {
     setSelectedMake("");
     setModels([]);
     setError(null);
-  };
-
-  const toggleEnabled = (id: string) => {
-    setModels(models.map((model) => (model.id === id ? { ...model, enabled: !model.enabled } : model)));
-    toast.success("Model status updated");
   };
 
   return (
@@ -102,7 +99,7 @@ export default function CarModelPage() {
             </SelectTrigger>
             <SelectContent>
               {makes.map((make) => (
-                <SelectItem key={make.id} value={make.id}>
+                <SelectItem key={make.id} value={make.id.toString()}>
                   {make.name}
                 </SelectItem>
               ))}
@@ -121,21 +118,19 @@ export default function CarModelPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Model</TableHead>
-                <TableHead>Colors</TableHead>
-                <TableHead>Images</TableHead>
-                <TableHead>Enabled</TableHead>
+                <TableHead>Make</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center">
+                  <TableCell colSpan={2} className="text-center">
                     Loading...
                   </TableCell>
                 </TableRow>
               ) : error ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center text-red-500">
+                  <TableCell colSpan={2} className="text-center text-red-500">
                     {error}
                   </TableCell>
                 </TableRow>
@@ -145,27 +140,12 @@ export default function CarModelPage() {
                   .map((model) => (
                     <TableRow key={model.id}>
                       <TableCell className="font-medium">{model.name}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-1 flex-wrap">
-                          {model.colors.map((color) => (
-                            <Badge key={color} variant="secondary">
-                              {color}
-                            </Badge>
-                          ))}
-                        </div>
-                      </TableCell>
-                      <TableCell>{model.images} images</TableCell>
-                      <TableCell>
-                        <Switch
-                          checked={model.enabled}
-                          onCheckedChange={() => toggleEnabled(model.id)}
-                        />
-                      </TableCell>
+                      <TableCell>{model.make?.name || 'N/A'}</TableCell>
                     </TableRow>
                   ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center">
+                  <TableCell colSpan={2} className="text-center">
                     {selectedMake ? "No models found." : "Select a make to see the models."}
                   </TableCell>
                 </TableRow>

@@ -13,12 +13,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { useCarMakes, useCarModels, useCarColors, useCarVariants, useCar, useCreateCar, useUpdateCar } from "@/hooks/useCars";
 import { useToast } from "@/components/ui/use-toast";
 import type { CarCreateRequest } from "@/lib/api";
@@ -27,23 +21,26 @@ export default function CarForm() {
   const navigate = useNavigate();
   const { id } = useParams();
   const { toast } = useToast();
-  const carId = id ? parseInt(id) : undefined;
-  const isEdit = Boolean(id);
-
-  // Form data state
-  const [formData, setFormData] = useState<CarCreateRequest>({
+  
+  const [currentStep, setCurrentStep] = useState(1);
+  const [carId, setCarId] = useState<number | undefined>(id ? parseInt(id, 10) : undefined);
+  
+  const [formData, setFormData] = useState<Partial<CarCreateRequest>>({
     makeId: 0,
     modelId: 0,
     colorId: 0,
     variantId: 0,
     isActive: true,
+    x_front: 0,
+    y_front: 0,
+    x_rear: 0,
+    y_rear: 0,
+    wheelSize: 0,
   });
   const [carImage, setCarImage] = useState<string>("");
 
-  // Fetch existing car data if editing
   const { data: existingCar, isLoading: carLoading } = useCar(carId);
 
-  // Fetch master data
   const { data: makesData, isLoading: makesLoading } = useCarMakes({ limit: 100 });
   const { data: colorsData, isLoading: colorsLoading } = useCarColors({ limit: 100 });
   const { data: modelsData, isLoading: modelsLoading } = useCarModels({
@@ -55,27 +52,30 @@ export default function CarForm() {
     limit: 100,
   });
 
-  // Mutations
   const createCar = useCreateCar();
   const updateCar = useUpdateCar();
 
-  // Load existing car data when fetched
   useEffect(() => {
-    if (isEdit && existingCar) {
+    if (carId && existingCar) {
       setFormData({
         makeId: existingCar.variant?.model?.make?.id || 0,
         modelId: existingCar.variant?.model?.id || 0,
         colorId: existingCar.colorId,
         variantId: existingCar.variantId,
         isActive: existingCar.isActive ?? true,
+        x_front: existingCar.x_front || 0,
+        y_front: existingCar.y_front || 0,
+        x_rear: existingCar.x_rear || 0,
+        y_rear: existingCar.y_rear || 0,
+        wheelSize: existingCar.wheelSize || 0,
       });
       if (existingCar.carImage) {
         setCarImage(existingCar.carImage);
       }
     }
-  }, [existingCar, isEdit]);
+  }, [existingCar, carId]);
 
-  const handleSaveDetails = () => {
+  const handleStep1Submit = () => {
     if (!formData.makeId || !formData.modelId || !formData.colorId || !formData.variantId) {
       toast({
         title: "Incomplete Form",
@@ -85,23 +85,42 @@ export default function CarForm() {
       return;
     }
 
-    if (!isEdit) {
-      createCar.mutate(formData, {
-        onSuccess: (savedCar) => {
-          toast({ title: "Car created successfully!" });
-          navigate(`/cars/${savedCar.id}`);
+    if (carId) {
+      updateCar.mutate({ id: carId, data: formData }, {
+        onSuccess: () => {
+          toast({ title: "Step 1 Completed" });
+          setCurrentStep(2);
         },
       });
     } else {
-      updateCar.mutate(
-        { id: carId!, data: formData },
-        {
-          onSuccess: () => {
-            toast({ title: "Car details updated successfully!" });
-          },
-        }
-      );
+      createCar.mutate(formData as CarCreateRequest, {
+        onSuccess: (savedCar) => {
+          setCarId(savedCar.id);
+          toast({ title: "Car created! Now add an image." });
+          setCurrentStep(2);
+        },
+      });
     }
+  };
+  
+  const handleStep2Submit = () => {
+    if (!carId) return;
+    updateCar.mutate({ id: carId, data: { carImage } }, {
+      onSuccess: () => {
+        toast({ title: "Step 2 Completed" });
+        setCurrentStep(3);
+      },
+    });
+  };
+
+  const handleStep3Submit = () => {
+    if (!carId) return;
+    updateCar.mutate({ id: carId, data: formData }, {
+      onSuccess: () => {
+        toast({ title: "Car Saved Successfully!" });
+        navigate("/cars");
+      },
+    });
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -109,34 +128,16 @@ export default function CarForm() {
     if (file) {
       const reader = new FileReader();
       reader.onload = (event) => {
-        const imageUrl = event.target?.result as string;
-        setCarImage(imageUrl);
-        if (carId) {
-          updateCar.mutate(
-            { id: carId, data: { ...formData } },
-            {
-              onSuccess: () => {
-                toast({ title: "Image updated successfully!" });
-              },
-            }
-          );
-        }
+        setCarImage(event.target?.result as string);
       };
       reader.readAsDataURL(file);
     }
   };
-
-  const isLoading = carLoading || makesLoading || colorsLoading || modelsLoading || variantsLoading;
+  
   const isSaving = createCar.isPending || updateCar.isPending;
 
-  if (isEdit && carLoading) {
-    return (
-      <MainLayout>
-        <div className="flex items-center justify-center h-64">
-          <Loader className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </MainLayout>
-    );
+  if (carId && carLoading) {
+    return <MainLayout><div className="flex items-center justify-center h-64"><Loader className="h-8 w-8 animate-spin text-primary" /></div></MainLayout>;
   }
 
   return (
@@ -148,27 +149,22 @@ export default function CarForm() {
           </Button>
           <div>
             <h1 className="text-3xl font-bold tracking-tight">
-              {isEdit ? "Edit Car" : "Add New Car"}
+              {carId ? "Edit Car" : "Add New Car"}
             </h1>
             <p className="text-muted-foreground mt-1">
-              {isEdit ? "Update car details and images" : "Create a new car listing"}
+              {`Step ${currentStep} of 3`}
             </p>
           </div>
         </div>
 
-        <Accordion type="single" collapsible defaultValue="step1" className="w-full">
-          <AccordionItem value="step1">
-            <AccordionTrigger className="text-lg font-semibold">
-              Step 1: Select Car Details
-            </AccordionTrigger>
-            <AccordionContent>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Car Make & Model</CardTitle>
-                  <CardDescription>Select car details from available options</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                {!makesData?.items || makesData.items.length === 0 ? (
+        {currentStep === 1 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Step 1: Select Car Details</CardTitle>
+              <CardDescription>Select car details from available options</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+            {!makesData?.items || makesData.items.length === 0 ? (
                   <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800">
                     <p className="font-medium">⚠️ No car makes available</p>
                     <p className="text-sm mt-1">Please create car makes from the backend admin panel first.</p>
@@ -178,7 +174,7 @@ export default function CarForm() {
                     <div className="space-y-2">
                       <Label htmlFor="make">Car Make *</Label>
                       <Select
-                        value={formData.makeId.toString()}
+                        value={formData.makeId?.toString()}
                         onValueChange={(value) =>
                           setFormData({ ...formData, makeId: parseInt(value), modelId: 0 })
                         }
@@ -208,7 +204,7 @@ export default function CarForm() {
                         </div>
                       ) : (
                         <Select
-                          value={formData.modelId.toString()}
+                          value={formData.modelId?.toString()}
                           onValueChange={(value) =>
                             setFormData({ ...formData, modelId: parseInt(value), variantId: 0 })
                           }
@@ -235,7 +231,7 @@ export default function CarForm() {
                         </div>
                       ) : (
                         <Select
-                          value={formData.colorId.toString()}
+                          value={formData.colorId?.toString()}
                           onValueChange={(value) =>
                             setFormData({ ...formData, colorId: parseInt(value) })
                           }
@@ -266,7 +262,7 @@ export default function CarForm() {
                         </div>
                       ) : (
                         <Select
-                          value={formData.variantId.toString()}
+                          value={formData.variantId?.toString()}
                           onValueChange={(value) =>
                             setFormData({ ...formData, variantId: parseInt(value) })
                           }
@@ -286,65 +282,88 @@ export default function CarForm() {
                     </div>
                   </>
                 )}
-                  <Button onClick={handleSaveDetails} disabled={isSaving || isLoading} className="w-full mt-4">
-                    {isSaving ? "Saving..." : isEdit ? "Update Details" : "Continue to Images"}
-                  </Button>
-                </CardContent>
-              </Card>
-            </AccordionContent>
-          </AccordionItem>
+            </CardContent>
+          </Card>
+        )}
 
-          {isEdit && (
-            <AccordionItem value="step2">
-              <AccordionTrigger className="text-lg font-semibold">
-                Step 2: Upload Car Image
-              </AccordionTrigger>
-              <AccordionContent>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Car Image</CardTitle>
-                    <CardDescription>Upload a single car image</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {carImage && (
-                      <div className="relative">
-                        <img
-                          src={carImage}
-                          alt="Car preview"
-                          className="max-w-md h-auto rounded-lg border"
-                        />
-                      </div>
-                    )}
-                    <div className="border-2 border-dashed border-muted rounded-lg p-8 text-center">
-                      <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                      <Label htmlFor="carImage" className="cursor-pointer">
-                        <p className="text-muted-foreground mb-2">
-                          Click to upload car image
-                        </p>
-                        <Input
-                          id="carImage"
-                          type="file"
-                          accept="image/*"
-                          onChange={handleImageUpload}
-                          className="hidden"
-                          disabled={isSaving}
-                        />
-                      </Label>
-                    </div>
-                  </CardContent>
-                </Card>
-              </AccordionContent>
-            </AccordionItem>
-          )}
-        </Accordion>
+        {currentStep === 2 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Step 2: Upload Car Image</CardTitle>
+                <CardDescription>Upload a single car image</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {carImage && (
+                  <div className="relative">
+                    <img
+                      src={carImage}
+                      alt="Car preview"
+                      className="max-w-md h-auto rounded-lg border"
+                    />
+                  </div>
+                )}
+                <div className="border-2 border-dashed border-muted rounded-lg p-8 text-center">
+                  <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                  <Label htmlFor="carImage" className="cursor-pointer">
+                    <p className="text-muted-foreground mb-2">
+                      Click to upload car image
+                    </p>
+                    <Input
+                      id="carImage"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      disabled={isSaving}
+                    />
+                  </Label>
+                </div>
+              </CardContent>
+            </Card>
+        )}
+        
+        {currentStep === 3 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Step 3: Wheel Placement</CardTitle>
+                <CardDescription>Set the coordinates for wheel placement</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="x_front">Front Wheel X *</Label>
+                    <Input id="x_front" type="number" value={formData.x_front} onChange={(e) => setFormData({...formData, x_front: parseFloat(e.target.value)})} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="y_front">Front Wheel Y *</Label>
+                    <Input id="y_front" type="number" value={formData.y_front} onChange={(e) => setFormData({...formData, y_front: parseFloat(e.target.value)})} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="x_rear">Rear Wheel X *</Label>
+                    <Input id="x_rear" type="number" value={formData.x_rear} onChange={(e) => setFormData({...formData, x_rear: parseFloat(e.target.value)})} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="y_rear">Rear Wheel Y *</Label>
+                    <Input id="y_rear" type="number" value={formData.y_rear} onChange={(e) => setFormData({...formData, y_rear: parseFloat(e.target.value)})} />
+                  </div>
+                  <div className="space-y-2 col-span-2">
+                    <Label htmlFor="wheelSize">Wheel Size *</Label>
+                    <Input id="wheelSize" type="number" value={formData.wheelSize} onChange={(e) => setFormData({...formData, wheelSize: parseFloat(e.target.value)})} />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+        )}
 
         <div className="flex justify-between gap-4">
-          <Button variant="outline" onClick={() => navigate("/cars")} disabled={isSaving}>
-            Cancel
-          </Button>
-          <Button onClick={() => navigate("/cars")} disabled={isSaving}>
-            {isSaving ? "Saving..." : "Back to Cars"}
-          </Button>
+            <div>
+              {currentStep > 1 && <Button variant="outline" onClick={() => setCurrentStep(currentStep - 1)} disabled={isSaving}>Previous</Button>}
+            </div>
+            <div>
+              {currentStep === 1 && <Button onClick={handleStep1Submit} disabled={isSaving}>Next</Button>}
+              {currentStep === 2 && <Button onClick={handleStep2Submit} disabled={isSaving}>Next</Button>}
+              {currentStep === 3 && <Button onClick={handleStep3Submit} disabled={isSaving}>Save Car</Button>}
+            </div>
         </div>
       </div>
     </MainLayout>
