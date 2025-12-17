@@ -25,10 +25,10 @@ export default function Dashboard() {
   const { data: activeCarsData, isLoading: activeCarsLoading } = useCars({ page: 1, limit: 1, isActive: true });
   const { data: activeAlloysData, isLoading: activeAlloysLoading } = useAlloys({ page: 1, limit: 1, isActive: true });
 
-  const totalCars = totalCarsData?.pagination.totalItems ?? 0;
-  const totalAlloys = totalAlloysData?.pagination.totalItems ?? 0;
-  const activeCars = activeCarsData?.pagination.totalItems ?? 0;
-  const activeAlloys = activeAlloysData?.pagination.totalItems ?? 0;
+  const totalCars = totalCarsData?.pagination?.totalItems ?? 0;
+  const totalAlloys = totalAlloysData?.pagination?.totalItems ?? 0;
+  const activeCars = activeCarsData?.pagination?.totalItems ?? 0;
+  const activeAlloys = activeAlloysData?.pagination?.totalItems ?? 0;
   
   const isLoading = totalCarsLoading || totalAlloysLoading || activeCarsLoading || activeAlloysLoading;
 
