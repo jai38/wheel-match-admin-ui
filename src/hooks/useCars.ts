@@ -98,6 +98,23 @@ export const useUpdateCar = () => {
   });
 };
 
+export const useUploadCarImages = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, images }: { id: number; images: File[] }) =>
+      carsService.uploadCarImages(id, images),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["car", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ["cars"] });
+      toast.success("Car images uploaded successfully");
+    },
+    onError: (error: { message?: string }) => {
+      toast.error(error.message || "Failed to upload car images");
+    },
+  });
+};
+
 export const useDeleteCar = () => {
   const queryClient = useQueryClient();
 

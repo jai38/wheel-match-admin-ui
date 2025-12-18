@@ -151,6 +151,22 @@ export const carsService = {
   },
 
   /**
+   * Upload car images
+   */
+  async uploadCarImages(id: number, images: File[]): Promise<void> {
+    const formData = new FormData();
+    images.forEach((image) => {
+      formData.append("images", image);
+    });
+
+    await apiClient.post(`/admin/cars/${id}/images`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+  },
+
+  /**
    * Delete car by ID
    */
   async deleteCar(id: number): Promise<void> {

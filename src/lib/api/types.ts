@@ -99,11 +99,17 @@ export interface CarVariant {
 }
 
 // Full Car Entity
+export interface CarImage {
+  id: number;
+  url: string;
+  carId: number;
+}
+
 export interface Car {
   id: number;
   variantId: number;
   colorId: number;
-  carImage?: string; // Single image from backend
+  carImages?: CarImage[];
   isActive?: boolean;
   variant?: CarVariant & { model?: CarModel & { make?: CarMake } };
   color?: CarColor;
@@ -126,7 +132,6 @@ export interface CarCreateRequest {
   modelId: number;
   colorId: number;
   variantId: number;
-  carImage?: string;
   x_front: number;
   y_front: number;
   x_rear: number;
