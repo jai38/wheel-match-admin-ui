@@ -26,4 +26,4 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Deploy to S3
-        run: aws s3 sync dist/ s3://neo-wheel-match-ui --delete
+        run: aws s3 sync dist/ s3://neo-wheels-admin-ui --delete
