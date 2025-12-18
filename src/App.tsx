@@ -31,142 +31,143 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/login" element={<Login />} />
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/cars"
-            element={
-              <ProtectedRoute>
-                <Cars />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/cars/new"
-            element={
-              <ProtectedRoute>
-                <CarForm />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/cars/:id"
-            element={
-              <ProtectedRoute>
-                <CarForm />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/alloys"
-            element={
-              <ProtectedRoute>
-                <Alloys />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/alloys/new"
-            element={
-              <ProtectedRoute>
-                <AlloyForm />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/alloys/:id"
-            element={
-              <ProtectedRoute>
-                <AlloyForm />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/alloys/:id/images"
-            element={
-              <ProtectedRoute>
-                <AlloyImagesForm />
-              </ProtectedRoute>
-            }
-          />
-          {/* Car Master Data Routes */}
-          <Route
-            path="/car-makes"
-            element={
-              <ProtectedRoute>
-                <CarMakes />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/car-models"
-            element={
-              <ProtectedRoute>
-                <CarModels />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/car-colors"
-            element={
-              <ProtectedRoute>
-                <CarColors />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/car-variants"
-            element={
-              <ProtectedRoute>
-                <CarVariants />
-              </ProtectedRoute>
-            }
-          />
-          {/* Alloy Master Data Routes */}
-          <Route
-            path="/alloy-designs"
-            element={
-              <ProtectedRoute>
-                <AlloyDesigns />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/alloy-pcds"
-            element={
-              <ProtectedRoute>
-                <AlloyPCDs />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/alloy-finishes"
-            element={
-              <ProtectedRoute>
-                <AlloyFinishes />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/alloy-sizes"
-            element={
-              <ProtectedRoute>
-                <AlloySizes />
-              </ProtectedRoute>
-            }
-          />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+          <Routes>
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/login" element={<Login />} />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/cars"
+              element={
+                <ProtectedRoute>
+                  <Cars />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/cars/new"
+              element={
+                <ProtectedRoute>
+                  <CarForm />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/cars/:id"
+              element={
+                <ProtectedRoute>
+                  <CarForm />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/alloys"
+              element={
+                <ProtectedRoute>
+                  <Alloys />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/alloys/new"
+              element={
+                <ProtectedRoute>
+                  <AlloyForm />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/alloys/:id"
+              element={
+                <ProtectedRoute>
+                  <AlloyForm />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/alloys/:id/images"
+              element={
+                <ProtectedRoute>
+                  <AlloyImagesForm />
+                </ProtectedRoute>
+              }
+            />
+            {/* Car Master Data Routes */}
+            <Route
+              path="/car-makes"
+              element={
+                <ProtectedRoute>
+                  <CarMakes />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/car-models"
+              element={
+                <ProtectedRoute>
+                  <CarModels />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/car-colors"
+              element={
+                <ProtectedRoute>
+                  <CarColors />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/car-variants"
+              element={
+                <ProtectedRoute>
+                  <CarVariants />
+                </ProtectedRoute>
+              }
+            />
+            {/* Alloy Master Data Routes */}
+            <Route
+              path="/alloy-designs"
+              element={
+                <ProtectedRoute>
+                  <AlloyDesigns />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/alloy-pcds"
+              element={
+                <ProtectedRoute>
+                  <AlloyPCDs />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/alloy-finishes"
+              element={
+                <ProtectedRoute>
+                  <AlloyFinishes />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/alloy-sizes"
+              element={
+                <ProtectedRoute>
+                  <AlloySizes />
+                </ProtectedRoute>
+              }
+            />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>
