@@ -71,11 +71,22 @@ export default function CarModels() {
   const makes = makesData?.items || [];
 
   // Fetch models filtered by selected make
+  const makeIdNum = filterMakeId ? parseInt(filterMakeId) : null;
+  const isValidMakeId =
+    makeIdNum !== null && !isNaN(makeIdNum) && makeIdNum > 0;
   const { data, isLoading, error } = useQuery({
     queryKey: ["carModels", page, filterMakeId],
-    queryFn: () =>
-      carsService.getModels({ page, limit, makeId: parseInt(filterMakeId) }),
-    enabled: !!filterMakeId && parseInt(filterMakeId) > 0,
+    queryFn: () => {
+      const params: { page: number; limit: number; makeId?: number } = {
+        page,
+        limit,
+      };
+      if (isValidMakeId && makeIdNum) {
+        params.makeId = makeIdNum;
+      }
+      return carsService.getModels(params);
+    },
+    enabled: isValidMakeId,
   });
 
   // Create mutation

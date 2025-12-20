@@ -90,41 +90,52 @@ export default function CarVariants() {
   const makes = makesData?.items || [];
 
   // Fetch models filtered by selected make (for filter)
+  const filterMakeIdNum = filterMakeId ? parseInt(filterMakeId) : null;
+  const isValidFilterMakeId = filterMakeIdNum !== null && !isNaN(filterMakeIdNum) && filterMakeIdNum > 0;
   const { data: filterModelsData, isLoading: filterModelsLoading } = useQuery({
     queryKey: ["carModelsForSelect", filterMakeId],
-    queryFn: () =>
-      carsService.getModels({
-        limit: 100,
-        makeId: parseInt(filterMakeId),
-      }),
-    enabled: !!filterMakeId && parseInt(filterMakeId) > 0,
+    queryFn: () => {
+      const params: { limit: number; makeId?: number } = { limit: 100 };
+      if (isValidFilterMakeId && filterMakeIdNum) {
+        params.makeId = filterMakeIdNum;
+      }
+      return carsService.getModels(params);
+    },
+    enabled: isValidFilterMakeId,
   });
 
   const filterModels = filterModelsData?.items || [];
 
   // Fetch models for Add Variant dialog (filtered by selected make in form)
+  const formMakeIdNum = formData.makeId ? parseInt(formData.makeId) : null;
+  const isValidFormMakeId = formMakeIdNum !== null && !isNaN(formMakeIdNum) && formMakeIdNum > 0;
   const { data: formModelsData, isLoading: formModelsLoading } = useQuery({
     queryKey: ["carModelsForForm", formData.makeId],
-    queryFn: () =>
-      carsService.getModels({
-        limit: 100,
-        makeId: parseInt(formData.makeId),
-      }),
-    enabled: !!formData.makeId && parseInt(formData.makeId) > 0,
+    queryFn: () => {
+      const params: { limit: number; makeId?: number } = { limit: 100 };
+      if (isValidFormMakeId && formMakeIdNum) {
+        params.makeId = formMakeIdNum;
+      }
+      return carsService.getModels(params);
+    },
+    enabled: isValidFormMakeId,
   });
 
   const formModels = formModelsData?.items || [];
 
   // Fetch variants filtered by selected model
+  const filterModelIdNum = filterModelId ? parseInt(filterModelId) : null;
+  const isValidFilterModelId = filterModelIdNum !== null && !isNaN(filterModelIdNum) && filterModelIdNum > 0;
   const { data, isLoading, error } = useQuery({
     queryKey: ["carVariants", page, filterModelId],
-    queryFn: () =>
-      carsService.getVariants({
-        page,
-        limit,
-        modelId: parseInt(filterModelId),
-      }),
-    enabled: !!filterModelId && parseInt(filterModelId) > 0,
+    queryFn: () => {
+      const params: { page: number; limit: number; modelId?: number } = { page, limit };
+      if (isValidFilterModelId && filterModelIdNum) {
+        params.modelId = filterModelIdNum;
+      }
+      return carsService.getVariants(params);
+    },
+    enabled: isValidFilterModelId,
   });
 
   // Create mutation
