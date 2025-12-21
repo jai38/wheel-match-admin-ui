@@ -15,7 +15,6 @@ import AlloyImagesForm from "./pages/AlloyImagesForm";
 import CarMakes from "./pages/CarMakes";
 import CarModels from "./pages/CarModels";
 import CarColors from "./pages/CarColors";
-import CarVariants from "./pages/CarVariants";
 import AlloyDesigns from "./pages/AlloyDesigns";
 import AlloyPCDs from "./pages/AlloyPCDs";
 import AlloyFinishes from "./pages/AlloyFinishes";
@@ -120,15 +119,6 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <CarColors />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/car-variants"
-              element={
-                <ProtectedRoute>
-                  <CarVariants />
                 </ProtectedRoute>
               }
             />

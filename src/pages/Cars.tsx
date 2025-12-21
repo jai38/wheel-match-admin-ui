@@ -110,7 +110,6 @@ export default function Cars() {
                     <TableHead>Make</TableHead>
                     <TableHead>Model</TableHead>
                     <TableHead>Color</TableHead>
-                    <TableHead>Variant</TableHead>
                     <TableHead>Active</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -118,14 +117,13 @@ export default function Cars() {
                 <TableBody>
                   {data.items.map((car) => (
                     <TableRow key={car.id}>
-                      <TableCell className="font-medium">{car.variant?.model?.make?.name || "N/A"}</TableCell>
-                      <TableCell>{car.variant?.model?.name || "N/A"}</TableCell>
+                      <TableCell className="font-medium">{car.model?.make?.name || "N/A"}</TableCell>
+                      <TableCell>{car.model?.name || "N/A"}</TableCell>
                       <TableCell>
                         <Badge variant="secondary">
                           {car.color?.name || "N/A"}
                         </Badge>
                       </TableCell>
-                      <TableCell>{car.variant?.name || "N/A"}</TableCell>
                       <TableCell>
                         <Switch
                           checked={car.isActive || false}

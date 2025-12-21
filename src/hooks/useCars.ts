@@ -38,15 +38,6 @@ export const useCarColors = (params?: PaginationParams) => {
   });
 };
 
-export const useCarVariants = (params?: PaginationParams & { modelId?: number }) => {
-  return useQuery({
-    queryKey: ["car-variants", params],
-    queryFn: () => carsService.getVariants(params),
-    enabled: !params?.modelId || params.modelId > 0,
-    staleTime: 5 * 60 * 1000,
-  });
-};
-
 // ========== Full Car Entity Hooks ==========
 
 export const useCars = (params?: CarFilterParams) => {

@@ -6,7 +6,6 @@ import type {
   CarMake,
   CarModel,
   CarColor,
-  CarVariant,
   CarCreateRequest,
   CarFilterParams,
   PaginationParams,
@@ -83,29 +82,6 @@ export const carsService = {
   async createColor(data: { name: string; colorCode?: string }): Promise<CarColor> {
     const response = await apiClient.post<ApiResponse<CarColor>>(
       "/admin/car/colors",
-      data
-    );
-    return response.data.data!;
-  },
-
-  // ========== Car Variants ==========
-  /**
-   * Get all car variants with pagination
-   */
-  async getVariants(params?: PaginationParams & { modelId?: number }): Promise<PaginatedResponse<CarVariant>> {
-    const queryString = params ? buildQueryString(params) : "";
-    const response = await apiClient.get<ApiResponse<Record<string, unknown>>>(
-      `/admin/car/variants${queryString}`
-    );
-    return normalizeListResponse<CarVariant>(response.data.data!);
-  },
-
-  /**
-   * Create new car variant
-   */
-  async createVariant(data: { name: string; modelId: number; defaultAlloySize: number; isActive?: boolean }): Promise<CarVariant> {
-    const response = await apiClient.post<ApiResponse<CarVariant>>(
-      "/admin/car/variants",
       data
     );
     return response.data.data!;

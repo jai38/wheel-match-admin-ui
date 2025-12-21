@@ -30,7 +30,7 @@ export interface PaginatedResponse<T> {
 
 // Helper to normalize response structure
 export const normalizeListResponse = <T,>(data: Record<string, unknown>): { items: T[]; pagination: PaginationMeta } => {
-  const items = (data.items || data.cars || data.alloys || data.makes || data.models || data.variants || data.colors || []) as T[];
+  const items = (data.items || data.cars || data.alloys || data.makes || data.models || data.colors || []) as T[];
   return { items, pagination: data.pagination as PaginationMeta };
 };
 
@@ -87,17 +87,6 @@ export interface CarColor {
   updatedAt?: string;
 }
 
-export interface CarVariant {
-  id: number;
-  name: string;
-  modelId: number;
-  defaultAlloySize: number;
-  isActive?: boolean;
-  model?: CarModel;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
 // Full Car Entity
 export interface CarImage {
   id: number;
@@ -107,11 +96,10 @@ export interface CarImage {
 
 export interface Car {
   id: number;
-  variantId: number;
+  modelId: number;
   colorId: number;
   carImages?: CarImage[];
   isActive?: boolean;
-  variant?: CarVariant & { model?: CarModel & { make?: CarMake } };
   color?: CarColor;
   x_front?: number;
   y_front?: number;
@@ -122,16 +110,13 @@ export interface Car {
   updatedAt?: string;
   // For creation/update
   makeId?: number;
-  modelId?: number;
   make?: CarMake;
   model?: CarModel;
 }
 
 export interface CarCreateRequest {
-  makeId: number;
   modelId: number;
   colorId: number;
-  variantId: number;
   x_front: number;
   y_front: number;
   x_rear: number;
@@ -144,7 +129,6 @@ export interface CarFilterParams extends PaginationParams {
   makeId?: number;
   modelId?: number;
   colorId?: number;
-  variantId?: number;
   isActive?: boolean;
 }
 

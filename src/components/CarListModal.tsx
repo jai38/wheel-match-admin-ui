@@ -36,42 +36,42 @@ export function CarListModal({
   const addCarsMutation = useAddCarsToAlloy();
   const removeCarMutation = useRemoveCarFromAlloy();
 
-  const uniqueVariants = useMemo(() => {
+  const uniqueModels = useMemo(() => {
     if (!carsData?.items) return [];
-    const variantsMap = new Map();
+    const modelsMap = new Map();
     carsData.items.forEach((car) => {
-      if (car.variant) {
-        variantsMap.set(car.variant.id, car.variant);
+      if (car.model) {
+        modelsMap.set(car.model.id, car.model);
       }
     });
-    return Array.from(variantsMap.values());
+    return Array.from(modelsMap.values());
   }, [carsData]);
 
-  const mappedVariants = useMemo(() => {
+  const mappedModels = useMemo(() => {
     if (!mappedCars) return [];
-    const variantsMap = new Map();
+    const modelsMap = new Map();
     mappedCars.forEach((car) => {
-      if (car.variant) {
-        variantsMap.set(car.variant.id, car.variant);
+      if (car.model) {
+        modelsMap.set(car.model.id, car.model);
       }
     });
-    return Array.from(variantsMap.values());
+    return Array.from(modelsMap.values());
   }, [mappedCars]);
 
   const handleAddCar = async () => {
     if (selectedVariants.length === 0) return;
     const carIds =
       carsData?.items
-        ?.filter((car) => selectedVariants.includes(car.variantId))
+        ?.filter((car) => selectedVariants.includes(car.modelId))
         .map((car) => car.id) || [];
     addCarsMutation.mutate({ alloyId, carIds });
     setSelectedVariants([]);
   };
 
-  const handleRemoveVariant = async (variantId: number) => {
+  const handleRemoveVariant = async (modelId: number) => {
     const carIdsToRemove =
       mappedCars
-        ?.filter((car) => car.variantId === variantId)
+        ?.filter((car) => car.modelId === modelId)
         .map((car) => car.id) || [];
 
     if (carIdsToRemove.length > 0) {
@@ -95,21 +95,21 @@ export function CarListModal({
           <div className="flex items-center space-x-2">
             <MultiSelect
               options={
-                uniqueVariants
+                uniqueModels
                   .filter(
-                    (variant) =>
-                      !mappedVariants.some(
-                        (mappedVariant) => mappedVariant.id === variant.id
+                    (model) =>
+                      !mappedModels.some(
+                        (mappedModel) => mappedModel.id === model.id
                       )
                   )
-                  .map((variant) => ({
-                    value: variant.id.toString(),
-                    label: `${variant.model?.make?.name} ${variant.model?.name} ${variant.name}`,
+                  .map((model) => ({
+                    value: model.id.toString(),
+                    label: `${model.make?.name} ${model.name}`,
                   })) || []
               }
               value={selectedVariants.map(String)}
               onChange={(value) => setSelectedVariants(value.map(Number))}
-              placeholder="Select variants to add"
+              placeholder="Select models to add"
               disabled={carsLoading}
               className="w-[400px]"
             />
@@ -126,31 +126,30 @@ export function CarListModal({
           </div>
 
           <div className="space-y-2">
-            <h4 className="text-sm font-medium">Mapped Variants</h4>
+            <h4 className="text-sm font-medium">Mapped Models</h4>
             <div className="border rounded-lg max-h-[300px] overflow-y-auto">
               {mappedCarsLoading ? (
                 <div className="flex items-center justify-center p-8">
                   <Loader className="h-6 w-6 animate-spin text-primary" />
                 </div>
-              ) : mappedVariants?.length === 0 ? (
+              ) : mappedModels?.length === 0 ? (
                 <p className="p-4 text-sm text-center text-muted-foreground">
                   No cars have been mapped to this alloy yet.
                 </p>
               ) : (
                 <ul className="divide-y">
-                  {mappedVariants?.map((variant) => (
+                  {mappedModels?.map((model) => (
                     <li
-                      key={variant.id}
+                      key={model.id}
                       className="flex items-center justify-between p-3"
                     >
                       <span>
-                        {variant.model?.make?.name} {variant.model?.name}{" "}
-                        {variant.name}
+                        {model.make?.name} {model.name}
                       </span>
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleRemoveVariant(variant.id)}
+                        onClick={() => handleRemoveVariant(model.id)}
                         disabled={removeCarMutation.isPending}
                       >
                         <Trash2 className="h-4 w-4 text-destructive" />

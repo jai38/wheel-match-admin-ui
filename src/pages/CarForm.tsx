@@ -23,7 +23,6 @@ import {
   useCarMakes,
   useCarModels,
   useCarColors,
-  useCarVariants,
   useCar,
   useCreateCar,
   useUpdateCar,
@@ -43,10 +42,8 @@ export default function CarForm() {
   );
 
   const [formData, setFormData] = useState<Partial<CarCreateRequest>>({
-    makeId: 0,
     modelId: 0,
     colorId: 0,
-    variantId: 0,
     isActive: true,
     x_front: 0,
     y_front: 0,
@@ -69,10 +66,6 @@ export default function CarForm() {
     makeId: formData.makeId || undefined,
     limit: 100,
   });
-  const { data: variantsData, isLoading: variantsLoading } = useCarVariants({
-    modelId: formData.modelId || undefined,
-    limit: 100,
-  });
 
   const createCar = useCreateCar();
   const updateCar = useUpdateCar();
@@ -81,10 +74,8 @@ export default function CarForm() {
   useEffect(() => {
     if (carId && existingCar) {
       setFormData({
-        makeId: existingCar.variant?.model?.make?.id || 0,
-        modelId: existingCar.variant?.model?.id || 0,
+        modelId: existingCar.model?.id || 0,
         colorId: existingCar.colorId,
-        variantId: existingCar.variantId,
         isActive: existingCar.isActive ?? true,
         x_front: existingCar.x_front || 0,
         y_front: existingCar.y_front || 0,
@@ -100,10 +91,8 @@ export default function CarForm() {
 
   const handleStep1Submit = () => {
     if (
-      !formData.makeId ||
       !formData.modelId ||
-      !formData.colorId ||
-      !formData.variantId
+      !formData.colorId
     ) {
       toast({
         title: "Incomplete Form",
@@ -288,7 +277,6 @@ export default function CarForm() {
                           setFormData({
                             ...formData,
                             modelId: parseInt(value),
-                            variantId: 0,
                           })
                         }>
                         <SelectTrigger id="model" disabled={modelsLoading}>
@@ -328,42 +316,6 @@ export default function CarForm() {
                               key={color.id}
                               value={color.id.toString()}>
                               {color.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="variant">Variant *</Label>
-                    {formData.modelId === 0 ? (
-                      <div className="p-2 bg-gray-100 rounded text-sm text-gray-600">
-                        Select a model first
-                      </div>
-                    ) : !variantsData?.items ||
-                      variantsData.items.length === 0 ? (
-                      <div className="p-2 bg-gray-100 rounded text-sm text-gray-600">
-                        No variants available for this model
-                      </div>
-                    ) : (
-                      <Select
-                        value={formData.variantId?.toString()}
-                        onValueChange={(value) =>
-                          setFormData({
-                            ...formData,
-                            variantId: parseInt(value),
-                          })
-                        }>
-                        <SelectTrigger id="variant" disabled={variantsLoading}>
-                          <SelectValue placeholder="Select a variant" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {variantsData?.items?.map((variant) => (
-                            <SelectItem
-                              key={variant.id}
-                              value={variant.id.toString()}>
-                              {variant.name}
                             </SelectItem>
                           ))}
                         </SelectContent>

@@ -19,7 +19,6 @@ const masterDataNavigation = [
       { name: "Makes", href: "/car-makes" },
       { name: "Models", href: "/car-models" },
       { name: "Colors", href: "/car-colors" },
-      { name: "Variants", href: "/car-variants" },
     ],
   },
   {
