@@ -196,3 +196,26 @@ export const alloysService = {
 
   // ========== Alloy - Car Mappings ==========
 
+  /**
+   * Get all cars mapped to a specific alloy
+   */
+  async getAlloyCars(alloyId: number): Promise<Car[]> {
+    const response = await apiClient.get<ApiResponse<{ cars: Car[] }>>(`/admin/alloys/${alloyId}/cars`);
+    return response.data.data!.cars;
+  },
+
+  /**
+   * Add a car to an alloy
+   */
+  async addCarsToAlloy(alloyId: number, carIds: number[]): Promise<void> {
+    await apiClient.post<ApiResponse>(`/admin/alloys/${alloyId}/cars`, { carIds });
+  },
+
+  /**
+   * Remove a car from an alloy
+   */
+  async removeCarFromAlloy(alloyId: number, carId: number): Promise<void> {
+    await apiClient.delete<ApiResponse>(`/admin/alloys/${alloyId}/cars/${carId}`);
+  },
+};
+
