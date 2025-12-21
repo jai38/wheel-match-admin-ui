@@ -1,3 +1,4 @@
+import axios from "axios";
 import apiClient, { buildQueryString } from "../client";
 import type {
   ApiResponse,
@@ -163,47 +164,35 @@ export const alloysService = {
   },
 
   /**
-   * Upload images for an alloy
+   * Upload images for an alloy using Presigned URLs
    */
-  async uploadAlloyImages(id: number, images: File[]): Promise<Alloy> {
-    const formData = new FormData();
-    images.forEach((image) => {
-      formData.append("images", image);
-    });
+  async uploadAlloyImages(id: number, images: File[]): Promise<void> {
+    // Process each image sequentially (or parallel if desired, but sequential is safer for ordering/errors)
+    for (const image of images) {
+      // Step 1: Get Upload URL
+      const uploadUrlResponse = await apiClient.post<
+        ApiResponse<{ uploadUrl: string; key: string }>
+      >("/admin/alloys/images/upload-url", {
+        fileName: image.name,
+        fileType: image.type,
+      });
 
-    const response = await apiClient.post<ApiResponse<Alloy>>(
-      `/admin/alloys/${id}/images`,
-      formData,
-      {
+      const { uploadUrl, key } = uploadUrlResponse.data.data!;
+
+      // Step 2: Upload to S3 directly (using raw axios to skip API interceptors)
+      await axios.put(uploadUrl, image, {
         headers: {
-          "Content-Type": "multipart/form-data",
+          "Content-Type": image.type,
         },
-      }
-    );
-    return response.data.data!;
+      });
+
+      // Step 3: Save Record Metadata
+      await apiClient.post<ApiResponse<unknown>>(
+        `/admin/alloys/${id}/images/metadata`,
+        { key }
+      );
+    }
   },
 
   // ========== Alloy - Car Mappings ==========
 
-  /**
-   * Get all cars mapped to a specific alloy
-   */
-  async getAlloyCars(alloyId: number): Promise<Car[]> {
-    const response = await apiClient.get<ApiResponse<{ cars: Car[] }>>(`/admin/alloys/${alloyId}/cars`);
-    return response.data.data!.cars;
-  },
-
-  /**
-   * Add a car to an alloy
-   */
-  async addCarsToAlloy(alloyId: number, carIds: number[]): Promise<void> {
-    await apiClient.post<ApiResponse>(`/admin/alloys/${alloyId}/cars`, { carIds });
-  },
-
-  /**
-   * Remove a car from an alloy
-   */
-  async removeCarFromAlloy(alloyId: number, carId: number): Promise<void> {
-    await apiClient.delete<ApiResponse>(`/admin/alloys/${alloyId}/cars/${carId}`);
-  },
-};

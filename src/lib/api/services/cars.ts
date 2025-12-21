@@ -1,3 +1,4 @@
+import axios from "axios";
 import apiClient, { buildQueryString } from "../client";
 import type {
   ApiResponse,
@@ -127,19 +128,33 @@ export const carsService = {
   },
 
   /**
-   * Upload car images
+   * Upload car images using Presigned URLs
    */
   async uploadCarImages(id: number, images: File[]): Promise<void> {
-    const formData = new FormData();
-    images.forEach((image) => {
-      formData.append("images", image);
-    });
+    for (const image of images) {
+      // Step 1: Get Upload URL
+      const uploadUrlResponse = await apiClient.post<
+        ApiResponse<{ uploadUrl: string; key: string }>
+      >("/admin/cars/images/upload-url", {
+        fileName: image.name,
+        fileType: image.type,
+      });
 
-    await apiClient.post(`/admin/cars/${id}/images`, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
+      const { uploadUrl, key } = uploadUrlResponse.data.data!;
+
+      // Step 2: Upload to S3 directly
+      await axios.put(uploadUrl, image, {
+        headers: {
+          "Content-Type": image.type,
+        },
+      });
+
+      // Step 3: Save Record Metadata
+      await apiClient.post<ApiResponse<unknown>>(
+        `/admin/cars/${id}/images/metadata`,
+        { key }
+      );
+    }
   },
 
   /**
