@@ -83,8 +83,8 @@ export default function CarForm() {
         y_rear: existingCar.y_rear || 0,
         wheelSize: existingCar.wheelSize || 0,
       });
-      if (existingCar.carImages) {
-        setImagePreviews(existingCar.carImages.map((img) => img.url));
+      if (existingCar.images) {
+        setImagePreviews(existingCar.images.map((img) => img.image_url));
       }
     }
   }, [existingCar, carId]);

@@ -142,7 +142,7 @@ export const useCreateCarModel = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: { name: string; makeId: number }) =>
+    mutationFn: (data: { name: string; makeId: number; defaultAlloySize?: number }) =>
       carsService.createModel(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["car-models"] });

@@ -75,6 +75,7 @@ export interface CarModel {
   name: string;
   makeId: number;
   make?: CarMake;
+  defaultAlloySize?: number;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -90,7 +91,7 @@ export interface CarColor {
 // Full Car Entity
 export interface CarImage {
   id: number;
-  url: string;
+  image_url: string;
   carId: number;
 }
 
@@ -98,7 +99,7 @@ export interface Car {
   id: number;
   modelId: number;
   colorId: number;
-  carImages?: CarImage[];
+  images?: CarImage[];
   isActive?: boolean;
   color?: CarColor;
   x_front?: number;

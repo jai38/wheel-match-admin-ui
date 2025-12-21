@@ -56,7 +56,7 @@ export const carsService = {
   /**
    * Create new car model
    */
-  async createModel(data: { name: string; makeId: number }): Promise<CarModel> {
+  async createModel(data: { name: string; makeId: number; defaultAlloySize?: number }): Promise<CarModel> {
     const response = await apiClient.post<ApiResponse<CarModel>>(
       "/admin/car/models",
       data

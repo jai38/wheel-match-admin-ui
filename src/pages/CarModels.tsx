@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Edit, Trash2, Loader } from "lucide-react";
+import { Plus, Edit, Trash2, Loader, Settings } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,14 +31,16 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { carsService } from "@/lib/api/services/cars";
 import type { CarModel, CarMake } from "@/lib/api";
 import { useToast } from "@/components/ui/use-toast";
+import { ManageModelSheet } from "@/components/cars/ManageModelSheet";
 
 const STORAGE_KEY_MAKE = "carMaster_selectedMake";
 
 export default function CarModels() {
   const [isOpen, setIsOpen] = useState(false);
-  const [formData, setFormData] = useState({ name: "", makeId: "" });
+  const [formData, setFormData] = useState({ name: "", makeId: "", defaultAlloySize: "" });
   const [filterMakeId, setFilterMakeId] = useState<string>("");
   const [page, setPage] = useState(1);
+  const [selectedModel, setSelectedModel] = useState<CarModel | null>(null);
   const limit = 10;
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -91,11 +93,11 @@ export default function CarModels() {
 
   // Create mutation
   const createMutation = useMutation({
-    mutationFn: (newModel: { name: string; makeId: number }) =>
+    mutationFn: (newModel: { name: string; makeId: number; defaultAlloySize?: number }) =>
       carsService.createModel(newModel),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["carModels"] });
-      setFormData({ name: "", makeId: "" });
+      setFormData({ name: "", makeId: "", defaultAlloySize: "" });
       setIsOpen(false);
       toast({ title: "Car Model created successfully" });
     },
@@ -113,6 +115,7 @@ export default function CarModels() {
     createMutation.mutate({
       name: formData.name,
       makeId: parseInt(formData.makeId),
+      defaultAlloySize: formData.defaultAlloySize ? parseInt(formData.defaultAlloySize) : undefined,
     });
   };
 
@@ -120,9 +123,9 @@ export default function CarModels() {
     if (open) {
       // Pre-fill form with saved makeId when opening dialog
       const savedMakeId = localStorage.getItem(STORAGE_KEY_MAKE);
-      setFormData({ name: "", makeId: savedMakeId || "" });
+      setFormData({ name: "", makeId: savedMakeId || "", defaultAlloySize: "" });
     } else {
-      setFormData({ name: "", makeId: "" });
+      setFormData({ name: "", makeId: "", defaultAlloySize: "" });
     }
     setIsOpen(open);
   };
@@ -218,6 +221,18 @@ export default function CarModels() {
                     </SelectContent>
                   </Select>
                 </div>
+                <div>
+                  <Label htmlFor="defaultAlloySize">Default Alloy Size (inches)</Label>
+                  <Input
+                    id="defaultAlloySize"
+                    type="number"
+                    placeholder="e.g., 18"
+                    value={formData.defaultAlloySize}
+                    onChange={(e) =>
+                      setFormData({ ...formData, defaultAlloySize: e.target.value })
+                    }
+                  />
+                </div>
                 <Button type="submit" disabled={createMutation.isPending}>
                   {createMutation.isPending ? "Creating..." : "Create"}
                 </Button>
@@ -288,7 +303,7 @@ export default function CarModels() {
                     <TableRow>
                       <TableHead>Model Name</TableHead>
                       <TableHead>Make</TableHead>
-                      {/* <TableHead className="text-right">Actions</TableHead> */}
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -298,16 +313,16 @@ export default function CarModels() {
                           {model.name}
                         </TableCell>
                         <TableCell>{model.make?.name || "N/A"}</TableCell>
-                        {/* <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button variant="ghost" size="icon" disabled>
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" disabled>
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </div>
-                        </TableCell> */}
+                        <TableCell className="text-right">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => setSelectedModel(model)}
+                          >
+                            <Settings className="h-4 w-4 mr-2" />
+                            Manage
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -344,6 +359,12 @@ export default function CarModels() {
             )}
           </div>
         )}
+        
+        <ManageModelSheet 
+          model={selectedModel} 
+          isOpen={!!selectedModel} 
+          onClose={() => setSelectedModel(null)} 
+        />
       </div>
     </MainLayout>
   );
