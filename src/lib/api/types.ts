@@ -75,7 +75,13 @@ export interface CarModel {
   name: string;
   makeId: number;
   make?: CarMake;
-  defaultAlloySize?: number;
+  defaultAlloySize?: number; // Inches
+  alloySize?: number; // Pixels
+  x_front?: number;
+  y_front?: number;
+  x_rear?: number;
+  y_rear?: number;
+  isActive?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -182,7 +188,9 @@ export interface Alloy {
   pcd?: AlloyPCD;
   finish?: AlloyFinish;
   size?: AlloySize;
-  alloyImages?: string[];
+  images?: string[];
+  carIds?: number[];
+  modelIds?: number[];
   isActive?: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -194,7 +202,9 @@ export interface AlloyCreateRequest {
   pcdId: number;
   finishId: number;
   sizeId: number;
-  alloyImages?: string[];
+  images?: string[];
+  carIds?: number[];
+  modelIds?: number[];
   isActive?: boolean;
   buy_url?: string;
 }
