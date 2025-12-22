@@ -101,6 +101,7 @@ export interface Car {
   colorId: number;
   images?: CarImage[];
   isActive?: boolean;
+  isDefault?: boolean;
   color?: CarColor;
   x_front?: number;
   y_front?: number;
@@ -124,6 +125,7 @@ export interface CarCreateRequest {
   y_rear: number;
   wheelSize: number;
   isActive?: boolean;
+  isDefault?: boolean;
 }
 
 export interface CarFilterParams extends PaginationParams {
@@ -175,6 +177,7 @@ export interface Alloy {
   pcdId: number;
   finishId: number;
   sizeId: number;
+  buy_url?: string;
   design?: AlloyDesign;
   pcd?: AlloyPCD;
   finish?: AlloyFinish;
@@ -193,6 +196,7 @@ export interface AlloyCreateRequest {
   sizeId: number;
   alloyImages?: string[];
   isActive?: boolean;
+  buy_url?: string;
 }
 
 export interface AlloyFilterParams extends PaginationParams {

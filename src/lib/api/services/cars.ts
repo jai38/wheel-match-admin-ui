@@ -42,6 +42,24 @@ export const carsService = {
     return response.data.data!;
   },
 
+  /**
+   * Update car make
+   */
+  async updateMake(id: number, data: { name?: string; logoUrl?: string; isActive?: boolean }): Promise<CarMake> {
+    const response = await apiClient.put<ApiResponse<CarMake>>(
+      `/admin/car/makes/${id}`,
+      data
+    );
+    return response.data.data!;
+  },
+
+  /**
+   * Delete car make
+   */
+  async deleteMake(id: number): Promise<void> {
+    await apiClient.delete<ApiResponse>(`/admin/car/makes/${id}`);
+  },
+
   // ========== Car Models ==========
   /**
    * Get all car models with pagination
@@ -65,6 +83,24 @@ export const carsService = {
     return response.data.data!;
   },
 
+  /**
+   * Update car model
+   */
+  async updateModel(id: number, data: { name?: string; makeId?: number; defaultAlloySize?: number; isActive?: boolean }): Promise<CarModel> {
+    const response = await apiClient.put<ApiResponse<CarModel>>(
+      `/admin/car/models/${id}`,
+      data
+    );
+    return response.data.data!;
+  },
+
+  /**
+   * Delete car model
+   */
+  async deleteModel(id: number): Promise<void> {
+    await apiClient.delete<ApiResponse>(`/admin/car/models/${id}`);
+  },
+
   // ========== Car Colors ==========
   /**
    * Get all car colors with pagination
@@ -86,6 +122,24 @@ export const carsService = {
       data
     );
     return response.data.data!;
+  },
+
+  /**
+   * Update car color
+   */
+  async updateColor(id: number, data: { name?: string; colorCode?: string; isActive?: boolean }): Promise<CarColor> {
+    const response = await apiClient.put<ApiResponse<CarColor>>(
+      `/admin/car/colors/${id}`,
+      data
+    );
+    return response.data.data!;
+  },
+
+  /**
+   * Delete car color
+   */
+  async deleteColor(id: number): Promise<void> {
+    await apiClient.delete<ApiResponse>(`/admin/car/colors/${id}`);
   },
 
   // ========== Full Car Entities ==========

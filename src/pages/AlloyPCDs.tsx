@@ -20,18 +20,21 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { alloysService } from "@/lib/api/services/alloys";
+import {
+  useCreateAlloyPCD,
+  useUpdateAlloyPCD,
+  useDeleteAlloyPCD
+} from "@/hooks/useAlloys";
 import type { AlloyPCD } from "@/lib/api";
-import { useToast } from "@/components/ui/use-toast";
 
 export default function AlloyPCDs() {
   const [isOpen, setIsOpen] = useState(false);
+  const [editingPCD, setEditingPCD] = useState<AlloyPCD | null>(null);
   const [formData, setFormData] = useState({ name: "" });
   const [page, setPage] = useState(1);
   const limit = 10;
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   // Fetch PCDs
   const { data, isLoading, error } = useQuery({
@@ -39,32 +42,49 @@ export default function AlloyPCDs() {
     queryFn: () => alloysService.getPCDs({ page, limit }),
   });
 
-  // Create mutation
-  const createMutation = useMutation({
-    mutationFn: (newPCD: { name: string }) => alloysService.createPCD(newPCD),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["alloyPCDs"] });
-      setFormData({ name: "" });
-      setIsOpen(false);
-      toast({ title: "Alloy PCD created successfully" });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error creating alloy PCD",
-        description: error.message || "An error occurred",
-        variant: "destructive",
-      });
-    },
-  });
+  const createMutation = useCreateAlloyPCD();
+  const updateMutation = useUpdateAlloyPCD();
+  const deleteMutation = useDeleteAlloyPCD();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    createMutation.mutate(formData);
+    if (editingPCD) {
+      updateMutation.mutate(
+        { id: editingPCD.id, data: formData },
+        {
+          onSuccess: () => {
+            handleOpenChange(false);
+          }
+        }
+      );
+    } else {
+      createMutation.mutate(
+        formData,
+        {
+          onSuccess: () => {
+            handleOpenChange(false);
+          }
+        }
+      );
+    }
+  };
+
+  const handleEdit = (pcd: AlloyPCD) => {
+    setEditingPCD(pcd);
+    setFormData({ name: pcd.name });
+    setIsOpen(true);
+  };
+
+  const handleDelete = (id: number) => {
+    if (confirm("Are you sure you want to delete this PCD?")) {
+      deleteMutation.mutate(id);
+    }
   };
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
       setFormData({ name: "" });
+      setEditingPCD(null);
     }
     setIsOpen(open);
   };
@@ -90,6 +110,8 @@ export default function AlloyPCDs() {
     hasPrevPage: false,
   };
 
+  const isSubmitting = createMutation.isPending || updateMutation.isPending;
+
   return (
     <MainLayout>
       <div className="space-y-6">
@@ -109,9 +131,9 @@ export default function AlloyPCDs() {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Add Alloy PCD</DialogTitle>
+                <DialogTitle>{editingPCD ? "Edit Alloy PCD" : "Add Alloy PCD"}</DialogTitle>
                 <DialogDescription>
-                  Create a new alloy wheel PCD specification (e.g., 5x112)
+                  {editingPCD ? "Update existing alloy wheel PCD specification" : "Create a new alloy wheel PCD specification (e.g., 5x112)"}
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -127,8 +149,8 @@ export default function AlloyPCDs() {
                     required
                   />
                 </div>
-                <Button type="submit" disabled={createMutation.isPending}>
-                  {createMutation.isPending ? "Creating..." : "Create"}
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? (editingPCD ? "Updating..." : "Creating...") : (editingPCD ? "Update" : "Create")}
                 </Button>
               </form>
             </DialogContent>
@@ -147,23 +169,33 @@ export default function AlloyPCDs() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>PCD Value</TableHead>
-                    {/* <TableHead className="text-right">Actions</TableHead> */}
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {data.items.map((pcd) => (
                     <TableRow key={pcd.id}>
                       <TableCell className="font-medium">{pcd.name}</TableCell>
-                      {/* <TableCell className="text-right">
+                      <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="icon" disabled>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => handleEdit(pcd)}
+                          >
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" disabled>
-                            <Trash2 className="h-4 w-4 text-destructive" />
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => handleDelete(pcd.id)}
+                            disabled={deleteMutation.isPending}
+                          >
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
-                      </TableCell> */}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

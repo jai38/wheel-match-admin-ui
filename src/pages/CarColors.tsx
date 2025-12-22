@@ -20,18 +20,21 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { carsService } from "@/lib/api/services/cars";
+import { 
+  useCreateCarColor, 
+  useUpdateCarColor, 
+  useDeleteCarColor 
+} from "@/hooks/useCars";
 import type { CarColor } from "@/lib/api";
-import { useToast } from "@/components/ui/use-toast";
 
 export default function CarColors() {
   const [isOpen, setIsOpen] = useState(false);
+  const [editingColor, setEditingColor] = useState<CarColor | null>(null);
   const [formData, setFormData] = useState({ name: "", colorCode: "" });
   const [page, setPage] = useState(1);
   const limit = 10;
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   // Fetch colors
   const { data, isLoading, error } = useQuery({
@@ -39,33 +42,49 @@ export default function CarColors() {
     queryFn: () => carsService.getColors({ page, limit }),
   });
 
-  // Create mutation
-  const createMutation = useMutation({
-    mutationFn: (newColor: { name: string; colorCode?: string }) =>
-      carsService.createColor(newColor),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["carColors"] });
-      setFormData({ name: "", colorCode: "" });
-      setIsOpen(false);
-      toast({ title: "Car Color created successfully" });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error creating car color",
-        description: error.message || "An error occurred",
-        variant: "destructive",
-      });
-    },
-  });
+  const createMutation = useCreateCarColor();
+  const updateMutation = useUpdateCarColor();
+  const deleteMutation = useDeleteCarColor();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    createMutation.mutate(formData);
+    if (editingColor) {
+      updateMutation.mutate(
+        { id: editingColor.id, data: formData },
+        {
+          onSuccess: () => {
+            handleOpenChange(false);
+          }
+        }
+      );
+    } else {
+      createMutation.mutate(
+        formData,
+        {
+          onSuccess: () => {
+            handleOpenChange(false);
+          }
+        }
+      );
+    }
+  };
+
+  const handleEdit = (color: CarColor) => {
+    setEditingColor(color);
+    setFormData({ name: color.name, colorCode: color.colorCode || "" });
+    setIsOpen(true);
+  };
+
+  const handleDelete = (id: number) => {
+    if (confirm("Are you sure you want to delete this color?")) {
+      deleteMutation.mutate(id);
+    }
   };
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
       setFormData({ name: "", colorCode: "" });
+      setEditingColor(null);
     }
     setIsOpen(open);
   };
@@ -91,6 +110,8 @@ export default function CarColors() {
     hasPrevPage: false,
   };
 
+  const isSubmitting = createMutation.isPending || updateMutation.isPending;
+
   return (
     <MainLayout>
       <div className="space-y-6">
@@ -110,9 +131,9 @@ export default function CarColors() {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Add Car Color</DialogTitle>
+                <DialogTitle>{editingColor ? "Edit Car Color" : "Add Car Color"}</DialogTitle>
                 <DialogDescription>
-                  Create a new car color with optional hex code
+                  {editingColor ? "Update existing car color" : "Create a new car color with optional hex code"}
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -133,7 +154,6 @@ export default function CarColors() {
                     Hex Code (Select from swatch)
                   </Label>
                   <div className="flex gap-2">
-                    {/* this should be a color swatch not the input text */}
                     <Input
                       id="colorCode"
                       placeholder="e.g., #FF0000"
@@ -152,16 +172,10 @@ export default function CarColors() {
                       className="w-12 h-10 p-1 cursor-pointer"
                       title="Pick a color"
                     />
-                    {/* {formData.colorCode && (
-                      <div
-                        className="w-10 h-10 rounded border"
-                        style={{ backgroundColor: formData.colorCode }}
-                      />
-                    )} */}
                   </div>
                 </div>
-                <Button type="submit" disabled={createMutation.isPending}>
-                  {createMutation.isPending ? "Creating..." : "Create"}
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? (editingColor ? "Updating..." : "Creating...") : (editingColor ? "Update" : "Create")}
                 </Button>
               </form>
             </DialogContent>
@@ -202,11 +216,21 @@ export default function CarColors() {
                       <TableCell>{color.colorCode || "N/A"}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="icon" disabled>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => handleEdit(color)}
+                          >
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" disabled>
-                            <Trash2 className="h-4 w-4 text-destructive" />
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => handleDelete(color.id)}
+                            disabled={deleteMutation.isPending}
+                          >
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </TableCell>

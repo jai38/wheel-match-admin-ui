@@ -188,6 +188,37 @@ export const useCreateAlloyDesign = () => {
   });
 };
 
+export const useUpdateAlloyDesign = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: { name?: string; description?: string; isActive?: boolean } }) =>
+      alloysService.updateDesign(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["alloy-designs"] });
+      toast.success("Alloy design updated successfully");
+    },
+    onError: (error: { message?: string }) => {
+      toast.error(error.message || "Failed to update alloy design");
+    },
+  });
+};
+
+export const useDeleteAlloyDesign = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: number) => alloysService.deleteDesign(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["alloy-designs"] });
+      toast.success("Alloy design deleted successfully");
+    },
+    onError: (error: { message?: string }) => {
+      toast.error(error.message || "Failed to delete alloy design");
+    },
+  });
+};
+
 export const useCreateAlloyPCD = () => {
   const queryClient = useQueryClient();
 
@@ -199,6 +230,37 @@ export const useCreateAlloyPCD = () => {
     },
     onError: (error: { message?: string }) => {
       toast.error(error.message || "Failed to create PCD");
+    },
+  });
+};
+
+export const useUpdateAlloyPCD = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: { name?: string; isActive?: boolean } }) =>
+      alloysService.updatePCD(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["alloy-pcds"] });
+      toast.success("PCD updated successfully");
+    },
+    onError: (error: { message?: string }) => {
+      toast.error(error.message || "Failed to update PCD");
+    },
+  });
+};
+
+export const useDeleteAlloyPCD = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: number) => alloysService.deletePCD(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["alloy-pcds"] });
+      toast.success("PCD deleted successfully");
+    },
+    onError: (error: { message?: string }) => {
+      toast.error(error.message || "Failed to delete PCD");
     },
   });
 };
@@ -219,6 +281,37 @@ export const useCreateAlloyFinish = () => {
   });
 };
 
+export const useUpdateAlloyFinish = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: { name?: string; description?: string; isActive?: boolean } }) =>
+      alloysService.updateFinish(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["alloy-finishes"] });
+      toast.success("Alloy finish updated successfully");
+    },
+    onError: (error: { message?: string }) => {
+      toast.error(error.message || "Failed to update alloy finish");
+    },
+  });
+};
+
+export const useDeleteAlloyFinish = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: number) => alloysService.deleteFinish(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["alloy-finishes"] });
+      toast.success("Alloy finish deleted successfully");
+    },
+    onError: (error: { message?: string }) => {
+      toast.error(error.message || "Failed to delete alloy finish");
+    },
+  });
+};
+
 export const useCreateAlloySize = () => {
   const queryClient = useQueryClient();
 
@@ -235,6 +328,37 @@ export const useCreateAlloySize = () => {
     },
     onError: (error: { message?: string }) => {
       toast.error(error.message || "Failed to create alloy size");
+    },
+  });
+};
+
+export const useUpdateAlloySize = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: { diameter?: number; width?: number; offset?: number; specs?: string; isActive?: boolean } }) =>
+      alloysService.updateSize(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["alloy-sizes"] });
+      toast.success("Alloy size updated successfully");
+    },
+    onError: (error: { message?: string }) => {
+      toast.error(error.message || "Failed to update alloy size");
+    },
+  });
+};
+
+export const useDeleteAlloySize = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: number) => alloysService.deleteSize(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["alloy-sizes"] });
+      toast.success("Alloy size deleted successfully");
+    },
+    onError: (error: { message?: string }) => {
+      toast.error(error.message || "Failed to delete alloy size");
     },
   });
 };

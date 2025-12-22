@@ -53,6 +53,7 @@ export default function AlloyForm() {
     pcdId: 0,
     finishId: 0,
     sizeId: 0,
+    buy_url: "",
   });
   const [alloyImages, setAlloyImages] = useState<string[]>([]);
 
@@ -86,6 +87,7 @@ export default function AlloyForm() {
         pcdId: existingAlloy.pcdId,
         finishId: existingAlloy.finishId,
         sizeId: existingAlloy.sizeId,
+        buy_url: existingAlloy.buy_url,
       });
     }
   }, [existingAlloy, isEdit]);
@@ -349,6 +351,18 @@ export default function AlloyForm() {
                       </SelectContent>
                     </Select>
                   )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="buy_url">Buy URL (Optional)</Label>
+                  <Input
+                    id="buy_url"
+                    placeholder="https://example.com/product/alloy-123"
+                    value={formData.buy_url || ""}
+                    onChange={(e) =>
+                      setFormData({ ...formData, buy_url: e.target.value })
+                    }
+                  />
                 </div>
               </>
             )}

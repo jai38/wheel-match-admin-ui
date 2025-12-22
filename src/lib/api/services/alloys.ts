@@ -43,6 +43,24 @@ export const alloysService = {
     return response.data.data!;
   },
 
+  /**
+   * Update alloy design
+   */
+  async updateDesign(id: number, data: { name?: string; description?: string; isActive?: boolean }): Promise<AlloyDesign> {
+    const response = await apiClient.put<ApiResponse<AlloyDesign>>(
+      `/admin/alloy/designs/${id}`,
+      data
+    );
+    return response.data.data!;
+  },
+
+  /**
+   * Delete alloy design
+   */
+  async deleteDesign(id: number): Promise<void> {
+    await apiClient.delete<ApiResponse>(`/admin/alloy/designs/${id}`);
+  },
+
   // ========== Alloy PCDs ==========
   /**
    * Get all PCDs with pagination
@@ -66,6 +84,24 @@ export const alloysService = {
     return response.data.data!;
   },
 
+  /**
+   * Update PCD
+   */
+  async updatePCD(id: number, data: { name?: string; isActive?: boolean }): Promise<AlloyPCD> {
+    const response = await apiClient.put<ApiResponse<AlloyPCD>>(
+      `/admin/alloy/pcds/${id}`,
+      data
+    );
+    return response.data.data!;
+  },
+
+  /**
+   * Delete PCD
+   */
+  async deletePCD(id: number): Promise<void> {
+    await apiClient.delete<ApiResponse>(`/admin/alloy/pcds/${id}`);
+  },
+
   // ========== Alloy Finishes ==========
   /**
    * Get all finishes with pagination
@@ -87,6 +123,24 @@ export const alloysService = {
       data
     );
     return response.data.data!;
+  },
+
+  /**
+   * Update finish
+   */
+  async updateFinish(id: number, data: { name?: string; description?: string; isActive?: boolean }): Promise<AlloyFinish> {
+    const response = await apiClient.put<ApiResponse<AlloyFinish>>(
+      `/admin/alloy/finishes/${id}`,
+      data
+    );
+    return response.data.data!;
+  },
+
+  /**
+   * Delete finish
+   */
+  async deleteFinish(id: number): Promise<void> {
+    await apiClient.delete<ApiResponse>(`/admin/alloy/finishes/${id}`);
   },
 
   // ========== Alloy Sizes ==========
@@ -115,6 +169,30 @@ export const alloysService = {
       data
     );
     return response.data.data!;
+  },
+
+  /**
+   * Update size
+   */
+  async updateSize(id: number, data: {
+    diameter?: number;
+    width?: number;
+    offset?: number;
+    specs?: string;
+    isActive?: boolean;
+  }): Promise<AlloySize> {
+    const response = await apiClient.put<ApiResponse<AlloySize>>(
+      `/admin/alloy/sizes/${id}`,
+      data
+    );
+    return response.data.data!;
+  },
+
+  /**
+   * Delete size
+   */
+  async deleteSize(id: number): Promise<void> {
+    await apiClient.delete<ApiResponse>(`/admin/alloy/sizes/${id}`);
   },
 
   // ========== Full Alloy Entities ==========

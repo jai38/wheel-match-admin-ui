@@ -138,6 +138,37 @@ export const useCreateCarMake = () => {
   });
 };
 
+export const useUpdateCarMake = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: { name?: string; logoUrl?: string; isActive?: boolean } }) =>
+      carsService.updateMake(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["car-makes"] });
+      toast.success("Car make updated successfully");
+    },
+    onError: (error: { message?: string }) => {
+      toast.error(error.message || "Failed to update car make");
+    },
+  });
+};
+
+export const useDeleteCarMake = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: number) => carsService.deleteMake(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["car-makes"] });
+      toast.success("Car make deleted successfully");
+    },
+    onError: (error: { message?: string }) => {
+      toast.error(error.message || "Failed to delete car make");
+    },
+  });
+};
+
 export const useCreateCarModel = () => {
   const queryClient = useQueryClient();
 
@@ -153,6 +184,40 @@ export const useCreateCarModel = () => {
     },
   });
 };
+
+export const useUpdateCarModel = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: { name?: string; makeId?: number; defaultAlloySize?: number; isActive?: boolean } }) =>
+      carsService.updateModel(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["car-models"] });
+      toast.success("Car model updated successfully");
+    },
+    onError: (error: { message?: string }) => {
+      toast.error(error.message || "Failed to update car model");
+    },
+  });
+};
+
+export const useDeleteCarModel = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: number) => carsService.deleteModel(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["car-models"] });
+      toast.success("Car model deleted successfully");
+    },
+    onError: (error: { message?: string }) => {
+      toast.error(error.message || "Failed to delete car model");
+    },
+  });
+};
+
+// No Delete Model yet? Assuming backend doesn't support it or I missed it.
+// I'll stick to update (for isActive) for now as requested for the table.
 
 export const useCreateCarColor = () => {
   const queryClient = useQueryClient();
@@ -170,18 +235,33 @@ export const useCreateCarColor = () => {
   });
 };
 
-export const useCreateCarVariant = () => {
+export const useUpdateCarColor = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: { name: string; modelId: number }) =>
-      carsService.createVariant(data),
+    mutationFn: ({ id, data }: { id: number; data: { name?: string; colorCode?: string; isActive?: boolean } }) =>
+      carsService.updateColor(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["car-variants"] });
-      toast.success("Car variant created successfully");
+      queryClient.invalidateQueries({ queryKey: ["car-colors"] });
+      toast.success("Car color updated successfully");
     },
     onError: (error: { message?: string }) => {
-      toast.error(error.message || "Failed to create car variant");
+      toast.error(error.message || "Failed to update car color");
+    },
+  });
+};
+
+export const useDeleteCarColor = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: number) => carsService.deleteColor(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["car-colors"] });
+      toast.success("Car color deleted successfully");
+    },
+    onError: (error: { message?: string }) => {
+      toast.error(error.message || "Failed to delete car color");
     },
   });
 };

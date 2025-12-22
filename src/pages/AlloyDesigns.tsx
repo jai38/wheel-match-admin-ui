@@ -21,18 +21,21 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { alloysService } from "@/lib/api/services/alloys";
+import {
+  useCreateAlloyDesign,
+  useUpdateAlloyDesign,
+  useDeleteAlloyDesign
+} from "@/hooks/useAlloys";
 import type { AlloyDesign } from "@/lib/api";
-import { useToast } from "@/components/ui/use-toast";
 
 export default function AlloyDesigns() {
   const [isOpen, setIsOpen] = useState(false);
+  const [editingDesign, setEditingDesign] = useState<AlloyDesign | null>(null);
   const [formData, setFormData] = useState({ name: "", description: "" });
   const [page, setPage] = useState(1);
   const limit = 10;
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   // Fetch designs
   const { data, isLoading, error } = useQuery({
@@ -40,33 +43,49 @@ export default function AlloyDesigns() {
     queryFn: () => alloysService.getDesigns({ page, limit }),
   });
 
-  // Create mutation
-  const createMutation = useMutation({
-    mutationFn: (newDesign: { name: string; description?: string }) =>
-      alloysService.createDesign(newDesign),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["alloyDesigns"] });
-      setFormData({ name: "", description: "" });
-      setIsOpen(false);
-      toast({ title: "Alloy Design created successfully" });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error creating alloy design",
-        description: error.message || "An error occurred",
-        variant: "destructive",
-      });
-    },
-  });
+  const createMutation = useCreateAlloyDesign();
+  const updateMutation = useUpdateAlloyDesign();
+  const deleteMutation = useDeleteAlloyDesign();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    createMutation.mutate(formData);
+    if (editingDesign) {
+      updateMutation.mutate(
+        { id: editingDesign.id, data: formData },
+        {
+          onSuccess: () => {
+            handleOpenChange(false);
+          }
+        }
+      );
+    } else {
+      createMutation.mutate(
+        formData,
+        {
+          onSuccess: () => {
+            handleOpenChange(false);
+          }
+        }
+      );
+    }
+  };
+
+  const handleEdit = (design: AlloyDesign) => {
+    setEditingDesign(design);
+    setFormData({ name: design.name, description: design.description || "" });
+    setIsOpen(true);
+  };
+
+  const handleDelete = (id: number) => {
+    if (confirm("Are you sure you want to delete this alloy design?")) {
+      deleteMutation.mutate(id);
+    }
   };
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
       setFormData({ name: "", description: "" });
+      setEditingDesign(null);
     }
     setIsOpen(open);
   };
@@ -92,6 +111,8 @@ export default function AlloyDesigns() {
     hasPrevPage: false,
   };
 
+  const isSubmitting = createMutation.isPending || updateMutation.isPending;
+
   return (
     <MainLayout>
       <div className="space-y-6">
@@ -111,9 +132,9 @@ export default function AlloyDesigns() {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Add Alloy Design</DialogTitle>
+                <DialogTitle>{editingDesign ? "Edit Alloy Design" : "Add Alloy Design"}</DialogTitle>
                 <DialogDescription>
-                  Create a new alloy wheel design style
+                  {editingDesign ? "Update existing alloy wheel design style" : "Create a new alloy wheel design style"}
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -140,8 +161,8 @@ export default function AlloyDesigns() {
                     }
                   />
                 </div>
-                <Button type="submit" disabled={createMutation.isPending}>
-                  {createMutation.isPending ? "Creating..." : "Create"}
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? (editingDesign ? "Updating..." : "Creating...") : (editingDesign ? "Update" : "Create")}
                 </Button>
               </form>
             </DialogContent>
@@ -161,7 +182,7 @@ export default function AlloyDesigns() {
                   <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead>Description</TableHead>
-                    {/* <TableHead className="text-right">Actions</TableHead> */}
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -173,16 +194,26 @@ export default function AlloyDesigns() {
                       <TableCell className="text-sm text-muted-foreground">
                         {design.description || "N/A"}
                       </TableCell>
-                      {/* <TableCell className="text-right">
+                      <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="icon" disabled>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => handleEdit(design)}
+                          >
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" disabled>
-                            <Trash2 className="h-4 w-4 text-destructive" />
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => handleDelete(design.id)}
+                            disabled={deleteMutation.isPending}
+                          >
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
-                      </TableCell> */}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

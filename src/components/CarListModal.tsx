@@ -9,12 +9,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { MultiSelect } from "@/components/MultiSelect";
-import { useCars } from "@/hooks/useCars";
-import {
-  useAlloyCars,
-  useAddCarsToAlloy,
-  useRemoveCarFromAlloy,
-} from "@/hooks/useAlloys";
+import { useCarModels } from "@/hooks/useCars";
+import { useAlloy, useUpdateAlloy } from "@/hooks/useAlloys";
 import { Loader, Trash2 } from "lucide-react";
 
 interface CarListModalProps {
@@ -28,66 +24,57 @@ export function CarListModal({
   open,
   onOpenChange,
 }: CarListModalProps) {
-  const [selectedVariants, setSelectedVariants] = useState<number[]>([]);
+  const [selectedModelIds, setSelectedModelIds] = useState<number[]>([]);
 
-  const { data: carsData, isLoading: carsLoading } = useCars({ limit: 1000 });
-  const { data: mappedCars, isLoading: mappedCarsLoading } =
-    useAlloyCars(alloyId);
-  const addCarsMutation = useAddCarsToAlloy();
-  const removeCarMutation = useRemoveCarFromAlloy();
+  // Fetch Alloy to get current modelIds
+  const { data: alloy, isLoading: alloyLoading } = useAlloy(alloyId);
 
-  const uniqueModels = useMemo(() => {
-    if (!carsData?.items) return [];
-    const modelsMap = new Map();
-    carsData.items.forEach((car) => {
-      if (car.model) {
-        modelsMap.set(car.model.id, car.model);
-      }
-    });
-    return Array.from(modelsMap.values());
-  }, [carsData]);
+  // Fetch Models
+  const { data: modelsData, isLoading: modelsLoading } = useCarModels({
+    limit: 1000,
+  });
+
+  const updateAlloyMutation = useUpdateAlloy();
+
+  const allModels = modelsData?.items || [];
 
   const mappedModels = useMemo(() => {
-    if (!mappedCars) return [];
-    const modelsMap = new Map();
-    mappedCars.forEach((car) => {
-      if (car.model) {
-        modelsMap.set(car.model.id, car.model);
-      }
-    });
-    return Array.from(modelsMap.values());
-  }, [mappedCars]);
+    if (!alloy?.modelIds || !allModels.length) return [];
+    return allModels.filter((model) => alloy.modelIds.includes(model.id));
+  }, [alloy?.modelIds, allModels]);
 
-  const handleAddCar = async () => {
-    if (selectedVariants.length === 0) return;
-    const carIds =
-      carsData?.items
-        ?.filter((car) => selectedVariants.includes(car.modelId))
-        .map((car) => car.id) || [];
-    addCarsMutation.mutate({ alloyId, carIds });
-    setSelectedVariants([]);
+  const handleAddModels = async () => {
+    if (selectedModelIds.length === 0 || !alloy) return;
+
+    const currentModelIds = alloy.modelIds || [];
+    const newModelIds = [...new Set([...currentModelIds, ...selectedModelIds])];
+
+    updateAlloyMutation.mutate({
+      id: alloyId,
+      data: { modelIds: newModelIds },
+    });
+    setSelectedModelIds([]);
   };
 
-  const handleRemoveVariant = async (modelId: number) => {
-    const carIdsToRemove =
-      mappedCars
-        ?.filter((car) => car.modelId === modelId)
-        .map((car) => car.id) || [];
+  const handleRemoveModel = async (modelId: number) => {
+    if (!alloy) return;
+    const currentModelIds = alloy.modelIds || [];
+    const newModelIds = currentModelIds.filter((id) => id !== modelId);
 
-    if (carIdsToRemove.length > 0) {
-      carIdsToRemove.forEach((carId) => {
-        removeCarMutation.mutate({ alloyId, carId });
-      });
-    }
+    updateAlloyMutation.mutate({
+      id: alloyId,
+      data: { modelIds: newModelIds },
+    });
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Manage Car List</DialogTitle>
+          <DialogTitle>Manage Compatible Models</DialogTitle>
           <DialogDescription>
-            Add or remove cars that are compatible with this alloy.
+            Add or remove car models that are compatible with this alloy. (All
+            color variants of the model will be included)
           </DialogDescription>
         </DialogHeader>
 
@@ -95,32 +82,28 @@ export function CarListModal({
           <div className="flex items-center space-x-2">
             <MultiSelect
               options={
-                uniqueModels
-                  .filter(
-                    (model) =>
-                      !mappedModels.some(
-                        (mappedModel) => mappedModel.id === model.id
-                      )
-                  )
+                allModels
+                  .filter((model) => !alloy?.modelIds?.includes(model.id))
                   .map((model) => ({
                     value: model.id.toString(),
                     label: `${model.make?.name} ${model.name}`,
                   })) || []
               }
-              value={selectedVariants.map(String)}
-              onChange={(value) => setSelectedVariants(value.map(Number))}
+              value={selectedModelIds.map(String)}
+              onChange={(value) => setSelectedModelIds(value.map(Number))}
               placeholder="Select models to add"
-              disabled={carsLoading}
-              className="w-[400px]"
+              disabled={modelsLoading || alloyLoading}
+              className="flex-1"
             />
             <Button
-              onClick={handleAddCar}
-              disabled={addCarsMutation.isPending || selectedVariants.length === 0}
-            >
-              {addCarsMutation.isPending ? (
+              onClick={handleAddModels}
+              disabled={
+                updateAlloyMutation.isPending || selectedModelIds.length === 0
+              }>
+              {updateAlloyMutation.isPending ? (
                 <Loader className="h-4 w-4 animate-spin" />
               ) : (
-                "Add Cars"
+                "Add Models"
               )}
             </Button>
           </div>
@@ -128,30 +111,28 @@ export function CarListModal({
           <div className="space-y-2">
             <h4 className="text-sm font-medium">Mapped Models</h4>
             <div className="border rounded-lg max-h-[300px] overflow-y-auto">
-              {mappedCarsLoading ? (
+              {alloyLoading ? (
                 <div className="flex items-center justify-center p-8">
                   <Loader className="h-6 w-6 animate-spin text-primary" />
                 </div>
               ) : mappedModels?.length === 0 ? (
                 <p className="p-4 text-sm text-center text-muted-foreground">
-                  No cars have been mapped to this alloy yet.
+                  No models have been mapped to this alloy yet.
                 </p>
               ) : (
                 <ul className="divide-y">
                   {mappedModels?.map((model) => (
                     <li
                       key={model.id}
-                      className="flex items-center justify-between p-3"
-                    >
+                      className="flex items-center justify-between p-3">
                       <span>
                         {model.make?.name} {model.name}
                       </span>
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleRemoveVariant(model.id)}
-                        disabled={removeCarMutation.isPending}
-                      >
+                        onClick={() => handleRemoveModel(model.id)}
+                        disabled={updateAlloyMutation.isPending}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </li>

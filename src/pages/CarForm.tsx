@@ -19,6 +19,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
 import {
   useCarMakes,
   useCarModels,
@@ -45,6 +46,7 @@ export default function CarForm() {
     modelId: 0,
     colorId: 0,
     isActive: true,
+    isDefault: false,
     x_front: 0,
     y_front: 0,
     x_rear: 0,
@@ -77,6 +79,7 @@ export default function CarForm() {
         modelId: existingCar.model?.id || 0,
         colorId: existingCar.colorId,
         isActive: existingCar.isActive ?? true,
+        isDefault: existingCar.isDefault ?? false,
         x_front: existingCar.x_front || 0,
         y_front: existingCar.y_front || 0,
         x_rear: existingCar.x_rear || 0,
@@ -321,6 +324,17 @@ export default function CarForm() {
                         </SelectContent>
                       </Select>
                     )}
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="isDefault"
+                      checked={formData.isDefault || false}
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, isDefault: checked })
+                      }
+                    />
+                    <Label htmlFor="isDefault">Mark as Default Color</Label>
                   </div>
                 </>
               )}

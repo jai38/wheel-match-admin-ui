@@ -27,16 +27,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { carsService } from "@/lib/api/services/cars";
-import type { CarModel, CarMake } from "@/lib/api";
+import type { CarModel, CarMake } from "@/lib/api/types";
 import { useToast } from "@/components/ui/use-toast";
 import { ManageModelSheet } from "@/components/cars/ManageModelSheet";
+import {
+  useCreateCarModel,
+  useUpdateCarModel,
+  useDeleteCarModel
+} from "@/hooks/useCars";
 
 const STORAGE_KEY_MAKE = "carMaster_selectedMake";
 
 export default function CarModels() {
   const [isOpen, setIsOpen] = useState(false);
+  const [editingModelId, setEditingModelId] = useState<number | null>(null);
   const [formData, setFormData] = useState({ name: "", makeId: "", defaultAlloySize: "" });
   const [filterMakeId, setFilterMakeId] = useState<string>("");
   const [page, setPage] = useState(1);
@@ -91,41 +98,65 @@ export default function CarModels() {
     enabled: isValidMakeId,
   });
 
-  // Create mutation
-  const createMutation = useMutation({
-    mutationFn: (newModel: { name: string; makeId: number; defaultAlloySize?: number }) =>
-      carsService.createModel(newModel),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["carModels"] });
-      setFormData({ name: "", makeId: "", defaultAlloySize: "" });
-      setIsOpen(false);
-      toast({ title: "Car Model created successfully" });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error creating car model",
-        description: error.message || "An error occurred",
-        variant: "destructive",
-      });
-    },
-  });
+  const createMutation = useCreateCarModel();
+  const updateMutation = useUpdateCarModel();
+  const deleteMutation = useDeleteCarModel();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    createMutation.mutate({
+    const modelData = {
       name: formData.name,
       makeId: parseInt(formData.makeId),
       defaultAlloySize: formData.defaultAlloySize ? parseInt(formData.defaultAlloySize) : undefined,
+    };
+
+    if (editingModelId) {
+      updateMutation.mutate(
+        { id: editingModelId, data: modelData },
+        {
+          onSuccess: () => {
+            handleOpenChange(false);
+          }
+        }
+      );
+    } else {
+      createMutation.mutate(modelData, {
+        onSuccess: () => {
+          handleOpenChange(false);
+        }
+      });
+    }
+  };
+
+  const handleToggleStatus = (model: CarModel, checked: boolean) => {
+    updateMutation.mutate({ id: model.id, data: { isActive: checked } });
+  };
+
+  const handleDelete = (id: number) => {
+    if (confirm("Are you sure you want to delete this model?")) {
+      deleteMutation.mutate(id);
+    }
+  };
+
+  const handleEdit = (model: CarModel) => {
+    setEditingModelId(model.id);
+    setFormData({
+      name: model.name,
+      makeId: model.makeId.toString(),
+      defaultAlloySize: model.defaultAlloySize?.toString() || "",
     });
+    setIsOpen(true);
   };
 
   const handleOpenChange = (open: boolean) => {
     if (open) {
-      // Pre-fill form with saved makeId when opening dialog
-      const savedMakeId = localStorage.getItem(STORAGE_KEY_MAKE);
-      setFormData({ name: "", makeId: savedMakeId || "", defaultAlloySize: "" });
+      if (!editingModelId) {
+        const savedMakeId = localStorage.getItem(STORAGE_KEY_MAKE);
+        setFormData({ name: "", makeId: savedMakeId || "", defaultAlloySize: "" });
+      }
     } else {
       setFormData({ name: "", makeId: "", defaultAlloySize: "" });
+      setEditingModelId(null);
     }
     setIsOpen(open);
   };
@@ -170,9 +201,9 @@ export default function CarModels() {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Add Car Model</DialogTitle>
+                <DialogTitle>{editingModelId ? "Edit Car Model" : "Add Car Model"}</DialogTitle>
                 <DialogDescription>
-                  Create a new car model linked to a make
+                  {editingModelId ? "Update existing car model" : "Create a new car model linked to a make"}
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -233,8 +264,8 @@ export default function CarModels() {
                     }
                   />
                 </div>
-                <Button type="submit" disabled={createMutation.isPending}>
-                  {createMutation.isPending ? "Creating..." : "Create"}
+                <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
+                  {createMutation.isPending || updateMutation.isPending ? (editingModelId ? "Updating..." : "Creating...") : (editingModelId ? "Update" : "Create")}
                 </Button>
               </form>
             </DialogContent>
@@ -303,6 +334,8 @@ export default function CarModels() {
                     <TableRow>
                       <TableHead>Model Name</TableHead>
                       <TableHead>Make</TableHead>
+                      <TableHead>Default Alloy Size</TableHead>
+                      <TableHead>Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -313,15 +346,42 @@ export default function CarModels() {
                           {model.name}
                         </TableCell>
                         <TableCell>{model.make?.name || "N/A"}</TableCell>
+                        <TableCell>
+                          {model.defaultAlloySize ? `${model.defaultAlloySize}"` : "-"}
+                        </TableCell>
+                        <TableCell>
+                          <Switch
+                            checked={model.isActive !== false}
+                            onCheckedChange={(checked) => handleToggleStatus(model, checked)}
+                          />
+                        </TableCell>
                         <TableCell className="text-right">
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => setSelectedModel(model)}
-                          >
-                            <Settings className="h-4 w-4 mr-2" />
-                            Manage
-                          </Button>
+                          <div className="flex justify-end gap-2">
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              onClick={() => handleEdit(model)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => handleDelete(model.id)}
+                              disabled={deleteMutation.isPending}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => setSelectedModel(model)}
+                            >
+                              <Settings className="h-4 w-4 mr-2" />
+                              Manage
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}

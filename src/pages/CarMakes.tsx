@@ -20,19 +20,23 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { carsService } from "@/lib/api/services/cars";
+import { useQuery } from "@tanstack/react-query";
+import { 
+  carsService, 
+} from "@/lib/api/services/cars";
+import { 
+  useCreateCarMake, 
+  useUpdateCarMake, 
+  useDeleteCarMake 
+} from "@/hooks/useCars";
 import type { CarMake } from "@/lib/api";
-import { useToast } from "@/components/ui/use-toast";
 
 export default function CarMakes() {
   const [isOpen, setIsOpen] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingMake, setEditingMake] = useState<CarMake | null>(null);
   const [formData, setFormData] = useState({ name: "", slug: "" });
   const [page, setPage] = useState(1);
   const limit = 10;
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   // Fetch makes
   const { data, isLoading, error } = useQuery({
@@ -40,34 +44,49 @@ export default function CarMakes() {
     queryFn: () => carsService.getMakes({ page, limit }),
   });
 
-  // Create mutation
-  const createMutation = useMutation({
-    mutationFn: (newMake: { name: string; slug: string }) =>
-      carsService.createMake(newMake),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["carMakes"] });
-      setFormData({ name: "", slug: "" });
-      setIsOpen(false);
-      toast({ title: "Car Make created successfully" });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error creating car make",
-        description: error.message || "An error occurred",
-        variant: "destructive",
-      });
-    },
-  });
+  const createMutation = useCreateCarMake();
+  const updateMutation = useUpdateCarMake();
+  const deleteMutation = useDeleteCarMake();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    createMutation.mutate(formData);
+    if (editingMake) {
+      updateMutation.mutate(
+        { id: editingMake.id, data: { name: formData.name } },
+        {
+          onSuccess: () => {
+            handleOpenChange(false);
+          }
+        }
+      );
+    } else {
+      createMutation.mutate(
+        { name: formData.name, slug: formData.slug },
+        {
+          onSuccess: () => {
+            handleOpenChange(false);
+          }
+        }
+      );
+    }
+  };
+
+  const handleEdit = (make: CarMake) => {
+    setEditingMake(make);
+    setFormData({ name: make.name, slug: make.slug });
+    setIsOpen(true);
+  };
+
+  const handleDelete = (id: number) => {
+    if (confirm("Are you sure you want to delete this make?")) {
+      deleteMutation.mutate(id);
+    }
   };
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
       setFormData({ name: "", slug: "" });
-      setEditingId(null);
+      setEditingMake(null);
     }
     setIsOpen(open);
   };
@@ -100,6 +119,8 @@ export default function CarMakes() {
     hasPrevPage: false,
   };
 
+  const isSubmitting = createMutation.isPending || updateMutation.isPending;
+
   return (
     <MainLayout>
       <div className="space-y-6">
@@ -119,9 +140,9 @@ export default function CarMakes() {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Add Car Make</DialogTitle>
+                <DialogTitle>{editingMake ? "Edit Car Make" : "Add Car Make"}</DialogTitle>
                 <DialogDescription>
-                  Create a new car manufacturer or brand
+                  {editingMake ? "Update existing car manufacturer" : "Create a new car manufacturer or brand"}
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -150,8 +171,8 @@ export default function CarMakes() {
                     disabled
                   />
                 </div>
-                <Button type="submit" disabled={createMutation.isPending}>
-                  {createMutation.isPending ? "Creating..." : "Create"}
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? (editingMake ? "Updating..." : "Creating...") : (editingMake ? "Update" : "Create")}
                 </Button>
               </form>
             </DialogContent>
@@ -171,7 +192,7 @@ export default function CarMakes() {
                   <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead>Slug</TableHead>
-                    {/* <TableHead className="text-right">Actions</TableHead> */}
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -179,16 +200,26 @@ export default function CarMakes() {
                     <TableRow key={make.id}>
                       <TableCell className="font-medium">{make.name}</TableCell>
                       <TableCell>{make.slug}</TableCell>
-                      {/* <TableCell className="text-right">
+                      <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="icon" disabled>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => handleEdit(make)}
+                          >
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" disabled>
-                            <Trash2 className="h-4 w-4 text-destructive" />
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => handleDelete(make.id)}
+                            disabled={deleteMutation.isPending}
+                          >
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
-                      </TableCell> */}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

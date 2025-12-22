@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader, Plus, Trash2, Upload, Car as CarIcon, ImageIcon } from "lucide-react";
+import { Loader, Plus, Trash2, Upload, Car as CarIcon, ImageIcon, Edit, X } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -31,6 +32,7 @@ import type { CarModel, CarColor, Car } from "@/lib/api/types";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 
 interface ManageModelSheetProps {
   model: CarModel | null;
@@ -41,6 +43,8 @@ interface ManageModelSheetProps {
 export function ManageModelSheet({ model, isOpen, onClose }: ManageModelSheetProps) {
   const [selectedColorId, setSelectedColorId] = useState<string>("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isDefault, setIsDefault] = useState(false);
+  const [editingCarId, setEditingCarId] = useState<number | null>(null);
   const queryClient = useQueryClient();
 
   // Fetch Colors
@@ -76,6 +80,7 @@ export function ManageModelSheet({ model, isOpen, onClose }: ManageModelSheetPro
         x_rear: 0,
         y_rear: 0,
         isActive: true,
+        isDefault: isDefault,
       });
 
       // 2. Upload Image
@@ -84,25 +89,83 @@ export function ManageModelSheet({ model, isOpen, onClose }: ManageModelSheetPro
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cars", model?.id] });
       toast.success("Car color variant added successfully");
-      setSelectedColorId("");
-      setSelectedFile(null);
+      resetForm();
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to add car color variant");
     },
   });
 
-  const handleAddColor = (e: React.FormEvent) => {
+  // Update Car Mutation
+  const updateCarMutation = useMutation({
+    mutationFn: async () => {
+      if (!model || !selectedColorId || !editingCarId) return;
+
+      // 1. Update Car
+      await carsService.updateCar(editingCarId, {
+        colorId: parseInt(selectedColorId),
+        isDefault: isDefault,
+      });
+
+      // 2. Upload Image (if new file selected)
+      if (selectedFile) {
+        await carsService.uploadCarImages(editingCarId, [selectedFile]);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cars", model?.id] });
+      toast.success("Car variant updated successfully");
+      resetForm();
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to update car variant");
+    },
+  });
+
+  // Delete Car Mutation
+  const deleteCarMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await carsService.deleteCar(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cars", model?.id] });
+      toast.success("Car variant deleted successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to delete car variant");
+    },
+  });
+
+  const resetForm = () => {
+    setSelectedColorId("");
+    setSelectedFile(null);
+    setIsDefault(false);
+    setEditingCarId(null);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedColorId) {
       toast.error("Please select a color");
       return;
     }
-    if (!selectedFile) {
-      toast.error("Please select an image");
-      return;
+    
+    if (editingCarId) {
+      updateCarMutation.mutate();
+    } else {
+      if (!selectedFile) {
+        toast.error("Please select an image");
+        return;
+      }
+      createCarMutation.mutate();
     }
-    createCarMutation.mutate();
+  };
+
+  const handleEdit = (car: Car) => {
+    setEditingCarId(car.id);
+    setSelectedColorId(car.colorId.toString());
+    setIsDefault(car.isDefault || false);
+    setSelectedFile(null); // Clear file input as we might want to keep existing image
   };
 
   if (!model) return null;
@@ -118,10 +181,20 @@ export function ManageModelSheet({ model, isOpen, onClose }: ManageModelSheetPro
         </SheetHeader>
 
         <div className="py-6 space-y-8">
-          {/* Add New Variant Section */}
+          {/* Add/Edit Variant Section */}
           <div className="space-y-4">
-            <h3 className="text-sm font-medium">Add New Color Variant</h3>
-            <form onSubmit={handleAddColor} className="space-y-4 p-4 border rounded-lg bg-muted/20">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-medium">
+                {editingCarId ? "Edit Variant" : "Add New Color Variant"}
+              </h3>
+              {editingCarId && (
+                <Button variant="ghost" size="sm" onClick={resetForm}>
+                  <X className="h-4 w-4 mr-2" />
+                  Cancel Edit
+                </Button>
+              )}
+            </div>
+            <form onSubmit={handleSubmit} className="space-y-4 p-4 border rounded-lg bg-muted/20">
               <div className="space-y-2">
                 <Label>Color</Label>
                 <Select value={selectedColorId} onValueChange={setSelectedColorId}>
@@ -143,7 +216,7 @@ export function ManageModelSheet({ model, isOpen, onClose }: ManageModelSheetPro
               </div>
 
               <div className="space-y-2">
-                <Label>Car Image</Label>
+                <Label>Car Image {editingCarId && "(Optional)"}</Label>
                 <div className="flex items-center gap-2">
                   <Input
                     type="file"
@@ -159,16 +232,29 @@ export function ManageModelSheet({ model, isOpen, onClose }: ManageModelSheetPro
                 )}
               </div>
 
-              <Button type="submit" disabled={createCarMutation.isPending} className="w-full">
-                {createCarMutation.isPending ? (
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="isDefault"
+                  checked={isDefault}
+                  onCheckedChange={setIsDefault}
+                />
+                <Label htmlFor="isDefault">Mark as Default Color</Label>
+              </div>
+
+              <Button 
+                type="submit" 
+                disabled={createCarMutation.isPending || updateCarMutation.isPending} 
+                className="w-full"
+              >
+                {createCarMutation.isPending || updateCarMutation.isPending ? (
                   <>
                     <Loader className="mr-2 h-4 w-4 animate-spin" />
-                    Adding...
+                    {editingCarId ? "Updating..." : "Adding..."}
                   </>
                 ) : (
                   <>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Variant
+                    {editingCarId ? <Edit className="mr-2 h-4 w-4" /> : <Plus className="mr-2 h-4 w-4" />}
+                    {editingCarId ? "Update Variant" : "Add Variant"}
                   </>
                 )}
               </Button>
@@ -199,7 +285,8 @@ export function ManageModelSheet({ model, isOpen, onClose }: ManageModelSheetPro
                     <TableRow>
                       <TableHead>Image</TableHead>
                       <TableHead>Color</TableHead>
-                      {/* <TableHead className="text-right">Actions</TableHead> */}
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -223,11 +310,31 @@ export function ManageModelSheet({ model, isOpen, onClose }: ManageModelSheetPro
                         <TableCell className="font-medium">
                           {car.color?.name || "Unknown Color"}
                         </TableCell>
-                        {/* <TableCell className="text-right">
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
+                        <TableCell>
+                          {car.isDefault && <Badge variant="secondary">Default</Badge>}
+                        </TableCell>
+                        <TableCell className="text-right space-x-2">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8"
+                            onClick={() => handleEdit(car)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-destructive hover:text-destructive"
+                            onClick={() => {
+                              if (confirm("Are you sure you want to delete this variant?")) {
+                                deleteCarMutation.mutate(car.id);
+                              }
+                            }}
+                          >
                             <Trash2 className="h-4 w-4" />
                           </Button>
-                        </TableCell> */}
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

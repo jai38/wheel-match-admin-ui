@@ -20,13 +20,18 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { alloysService } from "@/lib/api/services/alloys";
+import {
+  useCreateAlloySize,
+  useUpdateAlloySize,
+  useDeleteAlloySize
+} from "@/hooks/useAlloys";
 import type { AlloySize } from "@/lib/api";
-import { useToast } from "@/components/ui/use-toast";
 
 export default function AlloySizes() {
   const [isOpen, setIsOpen] = useState(false);
+  const [editingSize, setEditingSize] = useState<AlloySize | null>(null);
   const [formData, setFormData] = useState({
     diameter: "",
     width: "",
@@ -35,8 +40,6 @@ export default function AlloySizes() {
   });
   const [page, setPage] = useState(1);
   const limit = 10;
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   // Fetch sizes
   const { data, isLoading, error } = useQuery({
@@ -44,42 +47,62 @@ export default function AlloySizes() {
     queryFn: () => alloysService.getSizes({ page, limit }),
   });
 
-  // Create mutation
-  const createMutation = useMutation({
-    mutationFn: (newSize: {
-      diameter: number;
-      width: number;
-      offset: number;
-      specs: string;
-    }) => alloysService.createSize(newSize),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["alloySizes"] });
-      setFormData({ diameter: "", width: "", offset: "", specs: "" });
-      setIsOpen(false);
-      toast({ title: "Alloy Size created successfully" });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error creating alloy size",
-        description: error.message || "An error occurred",
-        variant: "destructive",
-      });
-    },
-  });
+  const createMutation = useCreateAlloySize();
+  const updateMutation = useUpdateAlloySize();
+  const deleteMutation = useDeleteAlloySize();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    createMutation.mutate({
+    const sizeData = {
       diameter: parseFloat(formData.diameter),
       width: parseFloat(formData.width),
       offset: formData.offset ? parseFloat(formData.offset) : undefined,
       specs: formData.specs,
+    };
+
+    if (editingSize) {
+      updateMutation.mutate(
+        { id: editingSize.id, data: sizeData },
+        {
+          onSuccess: () => {
+            handleOpenChange(false);
+          }
+        }
+      );
+    } else {
+      createMutation.mutate(
+        // @ts-ignore - offset is optional in mutation but required in type in some contexts, but service handles it
+        sizeData,
+        {
+          onSuccess: () => {
+            handleOpenChange(false);
+          }
+        }
+      );
+    }
+  };
+
+  const handleEdit = (size: AlloySize) => {
+    setEditingSize(size);
+    setFormData({
+      diameter: size.diameter.toString(),
+      width: size.width.toString(),
+      offset: size.offset ? size.offset.toString() : "",
+      specs: size.specs,
     });
+    setIsOpen(true);
+  };
+
+  const handleDelete = (id: number) => {
+    if (confirm("Are you sure you want to delete this alloy size?")) {
+      deleteMutation.mutate(id);
+    }
   };
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
       setFormData({ diameter: "", width: "", offset: "", specs: "" });
+      setEditingSize(null);
     }
     setIsOpen(open);
   };
@@ -105,6 +128,8 @@ export default function AlloySizes() {
     hasPrevPage: false,
   };
 
+  const isSubmitting = createMutation.isPending || updateMutation.isPending;
+
   return (
     <MainLayout>
       <div className="space-y-6">
@@ -124,9 +149,9 @@ export default function AlloySizes() {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Add Alloy Size</DialogTitle>
+                <DialogTitle>{editingSize ? "Edit Alloy Size" : "Add Alloy Size"}</DialogTitle>
                 <DialogDescription>
-                  Create a new alloy wheel size specification
+                  {editingSize ? "Update existing alloy wheel size specification" : "Create a new alloy wheel size specification"}
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -193,8 +218,8 @@ export default function AlloySizes() {
                     />
                   </div>
                 </div>
-                <Button type="submit" disabled={createMutation.isPending}>
-                  {createMutation.isPending ? "Creating..." : "Create"}
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? (editingSize ? "Updating..." : "Creating...") : (editingSize ? "Update" : "Create")}
                 </Button>
               </form>
             </DialogContent>
@@ -216,7 +241,7 @@ export default function AlloySizes() {
                     <TableHead>Diameter</TableHead>
                     <TableHead>Width</TableHead>
                     <TableHead>Offset</TableHead>
-                    {/* <TableHead className="text-right">Actions</TableHead> */}
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -228,16 +253,26 @@ export default function AlloySizes() {
                       <TableCell>{size.diameter}"</TableCell>
                       <TableCell>{size.width}"</TableCell>
                       <TableCell>ET{size.offset}</TableCell>
-                      {/* <TableCell className="text-right">
+                      <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="icon" disabled>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => handleEdit(size)}
+                          >
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" disabled>
-                            <Trash2 className="h-4 w-4 text-destructive" />
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => handleDelete(size.id)}
+                            disabled={deleteMutation.isPending}
+                          >
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
-                      </TableCell> */}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
