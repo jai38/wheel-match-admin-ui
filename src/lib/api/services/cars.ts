@@ -86,7 +86,17 @@ export const carsService = {
   /**
    * Update car model
    */
-  async updateModel(id: number, data: { name?: string; makeId?: number; defaultAlloySize?: number; isActive?: boolean }): Promise<CarModel> {
+  async updateModel(id: number, data: { 
+    name?: string; 
+    makeId?: number; 
+    defaultAlloySize?: number; 
+    isActive?: boolean;
+    x_front?: number;
+    y_front?: number;
+    x_rear?: number;
+    y_rear?: number;
+    alloySize?: number;
+  }): Promise<CarModel> {
     const response = await apiClient.put<ApiResponse<CarModel>>(
       `/admin/car/models/${id}`,
       data

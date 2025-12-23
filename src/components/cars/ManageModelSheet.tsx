@@ -65,6 +65,7 @@ export function ManageModelSheet({ model, isOpen, onClose }: ManageModelSheetPro
   // Initialize wheel config from model
   useEffect(() => {
     if (model) {
+      console.log("Model updated in ManageModelSheet", model);
       setWheelConfig({
         x_front: model.x_front || 0,
         y_front: model.y_front || 0,
@@ -94,13 +95,16 @@ export function ManageModelSheet({ model, isOpen, onClose }: ManageModelSheetPro
   const cars = carsData?.items || [];
 
   // Fetch Alloys for preview
-  const { data: alloysData } = useAlloys({ limit: 100 });
-  const alloys = alloysData?.items || [];
+  const { data: alloysData, isLoading: alloysLoading } = useAlloys({ limit: 100 });
+  
+  // Robustly get alloys array from paginated response
+  const alloys = alloysData?.items || alloysData?.alloys || [];
 
   const selectedAlloy = alloys.find(a => a.id.toString() === selectedAlloyId);
   const previewCar = cars.length > 0 ? cars.find(c => c.isDefault) || cars[0] : null;
-  const previewCarImage = previewCar?.images?.[0]?.image_url;
-  const previewAlloyImage = selectedAlloy?.images?.[0];
+  const previewCarImage = previewCar?.carImage;
+  // Fallback to legacy images array if image_url is missing
+  const previewAlloyImage = selectedAlloy?.image_url || (selectedAlloy as any)?.images?.[0]?.image_url || (selectedAlloy as any)?.images?.[0];
   
   const updateModelMutation = useUpdateCarModel();
 
@@ -126,14 +130,10 @@ export function ManageModelSheet({ model, isOpen, onClose }: ManageModelSheetPro
         modelId: model.id,
         colorId: parseInt(selectedColorId),
         wheelSize: model.defaultAlloySize || 0, // Using default from model
-        x_front: 0,
-        y_front: 0,
-        x_rear: 0,
-        y_rear: 0,
         isActive: true,
         isDefault: isDefault,
       });
-      await carsService.uploadCarImages(newCar.id, [selectedFile]);
+      await carsService.uploadCarImage(newCar.id, selectedFile);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cars", model?.id] });
@@ -153,7 +153,7 @@ export function ManageModelSheet({ model, isOpen, onClose }: ManageModelSheetPro
         isDefault: isDefault,
       });
       if (selectedFile) {
-        await carsService.uploadCarImages(editingCarId, [selectedFile]);
+        await carsService.uploadCarImage(editingCarId, selectedFile);
       }
     },
     onSuccess: () => {
@@ -343,10 +343,10 @@ export function ManageModelSheet({ model, isOpen, onClose }: ManageModelSheetPro
                         {cars.map((car: Car) => (
                           <TableRow key={car.id}>
                             <TableCell>
-                              {car.images && car.images.length > 0 ? (
+                              {car.carImage ? (
                                 <div className="h-10 w-16 relative rounded overflow-hidden bg-muted">
                                   <img 
-                                    src={car.images[0].image_url} 
+                                    src={car.carImage} 
                                     alt={car.color?.name} 
                                     className="object-cover w-full h-full"
                                   />
@@ -405,11 +405,17 @@ export function ManageModelSheet({ model, isOpen, onClose }: ManageModelSheetPro
                       <SelectValue placeholder="Choose an alloy to preview" />
                     </SelectTrigger>
                     <SelectContent>
-                      {alloys.map((alloy) => (
-                        <SelectItem key={alloy.id} value={alloy.id.toString()}>
-                          {alloy.alloyName}
-                        </SelectItem>
-                      ))}
+                      {alloysLoading ? (
+                        <SelectItem value="loading" disabled>Loading alloys...</SelectItem>
+                      ) : alloys.length === 0 ? (
+                        <SelectItem value="none" disabled>No alloys found</SelectItem>
+                      ) : (
+                        alloys.map((alloy) => (
+                          <SelectItem key={alloy.id} value={alloy.id.toString()}>
+                            {alloy.alloyName}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                 </div>

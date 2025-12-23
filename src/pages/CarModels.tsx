@@ -34,6 +34,7 @@ import type { CarModel, CarMake } from "@/lib/api/types";
 import { useToast } from "@/components/ui/use-toast";
 import { ManageModelSheet } from "@/components/cars/ManageModelSheet";
 import {
+  useCarModels,
   useCreateCarModel,
   useUpdateCarModel,
   useDeleteCarModel
@@ -79,23 +80,14 @@ export default function CarModels() {
 
   const makes = makesData?.items || [];
 
-  // Fetch models filtered by selected make
   const makeIdNum = filterMakeId ? parseInt(filterMakeId) : null;
   const isValidMakeId =
     makeIdNum !== null && !isNaN(makeIdNum) && makeIdNum > 0;
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["carModels", page, filterMakeId],
-    queryFn: () => {
-      const params: { page: number; limit: number; makeId?: number } = {
-        page,
-        limit,
-      };
-      if (isValidMakeId && makeIdNum) {
-        params.makeId = makeIdNum;
-      }
-      return carsService.getModels(params);
-    },
-    enabled: isValidMakeId,
+  
+  const { data, isLoading, error } = useCarModels({
+    page,
+    limit,
+    makeId: isValidMakeId && makeIdNum ? makeIdNum : undefined,
   });
 
   const createMutation = useCreateCarModel();

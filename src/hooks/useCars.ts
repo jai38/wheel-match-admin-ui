@@ -23,7 +23,7 @@ export const useCarMakes = (params?: PaginationParams) => {
 
 export const useCarModels = (params?: PaginationParams & { makeId?: number }) => {
   return useQuery({
-    queryKey: ["car-models", params],
+    queryKey: ["carModels", params],
     queryFn: () => carsService.getModels(params),
     enabled: !params?.makeId || params.makeId > 0,
     staleTime: 5 * 60 * 1000,
@@ -98,10 +98,26 @@ export const useUploadCarImage = () => {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["car", variables.id] });
       queryClient.invalidateQueries({ queryKey: ["cars"] });
-      toast.success("Car images uploaded successfully");
+      toast.success("Car image uploaded successfully");
     },
     onError: (error: { message?: string }) => {
-      toast.error(error.message || "Failed to upload car images");
+      toast.error(error.message || "Failed to upload car image");
+    },
+  });
+};
+
+export const useDeleteCarImage = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (carId: number) => carsService.deleteCarImage(carId),
+    onSuccess: (_, carId) => {
+      queryClient.invalidateQueries({ queryKey: ["cars"] });
+      queryClient.invalidateQueries({ queryKey: ["car", carId] });
+      toast.success("Car image deleted successfully");
+    },
+    onError: (error: { message?: string }) => {
+      toast.error(error.message || "Failed to delete car image");
     },
   });
 };
@@ -189,10 +205,27 @@ export const useUpdateCarModel = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: { name?: string; makeId?: number; defaultAlloySize?: number; isActive?: boolean } }) =>
+    mutationFn: ({ 
+      id, 
+      data 
+    }: { 
+      id: number; 
+      data: { 
+        name?: string; 
+        makeId?: number; 
+        defaultAlloySize?: number; 
+        isActive?: boolean;
+        x_front?: number;
+        y_front?: number;
+        x_rear?: number;
+        y_rear?: number;
+        alloySize?: number;
+      } 
+    }) =>
       carsService.updateModel(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["car-models"] });
+      queryClient.invalidateQueries({ queryKey: ["carModels"] });
       toast.success("Car model updated successfully");
     },
     onError: (error: { message?: string }) => {
