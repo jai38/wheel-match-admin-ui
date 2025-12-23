@@ -76,13 +76,39 @@ export default function CarForm() {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
-      setSelectedFile(file);
+      processFile(file);
+    }
+  };
 
-      if (imagePreview) {
-        URL.revokeObjectURL(imagePreview);
-      }
-      const preview = URL.createObjectURL(file);
-      setImagePreview(preview);
+  const processFile = (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid file type",
+        description: "Please select an image file.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setSelectedFile(file);
+
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+    }
+    const preview = URL.createObjectURL(file);
+    setImagePreview(preview);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      processFile(e.dataTransfer.files[0]);
     }
   };
 
@@ -260,7 +286,9 @@ export default function CarForm() {
               <CardContent className="space-y-4">
                 <div
                   className="border-2 border-dashed border-muted-foreground/50 rounded-lg p-8 text-center cursor-pointer hover:bg-muted/50"
-                  onClick={() => fileInputRef.current?.click()}>
+                  onClick={() => fileInputRef.current?.click()}
+                  onDragOver={handleDragOver}
+                  onDrop={handleDrop}>
                   <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
                   <p className="mt-4 text-sm text-muted-foreground">
                     Click to select or drag & drop car image

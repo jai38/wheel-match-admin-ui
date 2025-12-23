@@ -241,6 +241,37 @@ export default function AlloyForm() {
             ) : (
               <>
                 <div className="space-y-2">
+                  <Label htmlFor="size">
+                    Size (Diameter x Width) *
+                  </Label>
+                  {!sizesData?.items || sizesData.items.length === 0 ? (
+                    <div className="p-2 bg-gray-100 rounded text-sm text-gray-600">
+                      No sizes available
+                    </div>
+                  ) : (
+                    <Select
+                      value={formData.sizeId.toString()}
+                      onValueChange={(value) =>
+                        setFormData({
+                          ...formData,
+                          sizeId: parseInt(value),
+                        })
+                      }>
+                      <SelectTrigger id="size" disabled={sizesLoading}>
+                        <SelectValue placeholder="Select a size" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {sizesData?.items?.map((size) => (
+                          <SelectItem key={size.id} value={size.id.toString()}>
+                            {size.specs}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="design">Design *</Label>
                   <Select
                     value={formData.designId.toString()}
@@ -315,37 +346,6 @@ export default function AlloyForm() {
                             key={finish.id}
                             value={finish.id.toString()}>
                             {finish.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="size">
-                    Size (Diameter x Width ET Offset) *
-                  </Label>
-                  {!sizesData?.items || sizesData.items.length === 0 ? (
-                    <div className="p-2 bg-gray-100 rounded text-sm text-gray-600">
-                      No sizes available
-                    </div>
-                  ) : (
-                    <Select
-                      value={formData.sizeId.toString()}
-                      onValueChange={(value) =>
-                        setFormData({
-                          ...formData,
-                          sizeId: parseInt(value),
-                        })
-                      }>
-                      <SelectTrigger id="size" disabled={sizesLoading}>
-                        <SelectValue placeholder="Select a size" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {sizesData?.items?.map((size) => (
-                          <SelectItem key={size.id} value={size.id.toString()}>
-                            {size.specs}
                           </SelectItem>
                         ))}
                       </SelectContent>

@@ -35,8 +35,6 @@ export default function AlloySizes() {
   const [formData, setFormData] = useState({
     diameter: "",
     width: "",
-    offset: "",
-    specs: "",
   });
   const [page, setPage] = useState(1);
   const limit = 10;
@@ -56,8 +54,7 @@ export default function AlloySizes() {
     const sizeData = {
       diameter: parseFloat(formData.diameter),
       width: parseFloat(formData.width),
-      offset: formData.offset ? parseFloat(formData.offset) : undefined,
-      specs: formData.specs,
+      specs: `${formData.diameter}x${formData.width}`,
     };
 
     if (editingSize) {
@@ -71,7 +68,7 @@ export default function AlloySizes() {
       );
     } else {
       createMutation.mutate(
-        // @ts-ignore - offset is optional in mutation but required in type in some contexts, but service handles it
+        // @ts-ignore
         sizeData,
         {
           onSuccess: () => {
@@ -87,8 +84,6 @@ export default function AlloySizes() {
     setFormData({
       diameter: size.diameter.toString(),
       width: size.width.toString(),
-      offset: size.offset ? size.offset.toString() : "",
-      specs: size.specs,
     });
     setIsOpen(true);
   };
@@ -101,7 +96,7 @@ export default function AlloySizes() {
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
-      setFormData({ diameter: "", width: "", offset: "", specs: "" });
+      setFormData({ diameter: "", width: "" });
       setEditingSize(null);
     }
     setIsOpen(open);
@@ -189,35 +184,12 @@ export default function AlloySizes() {
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="offset">Offset (ET)</Label>
-                    <Input
-                      id="offset"
-                      type="number"
-                      step="1"
-                      min="-50"
-                      max="100"
-                      placeholder="e.g., 35"
-                      value={formData.offset}
-                      onChange={(e) =>
-                        setFormData({ ...formData, offset: e.target.value })
-                      }
-                    />
+                {formData.diameter && formData.width && (
+                  <div className="p-3 bg-muted rounded-md border">
+                    <p className="text-sm font-medium">Generated Spec:</p>
+                    <p className="text-lg font-bold">{formData.diameter}x{formData.width}</p>
                   </div>
-                  <div>
-                    <Label htmlFor="specs">Specs Display</Label>
-                    <Input
-                      id="specs"
-                      placeholder="e.g., 17x8 ET35"
-                      value={formData.specs}
-                      onChange={(e) =>
-                        setFormData({ ...formData, specs: e.target.value })
-                      }
-                      required
-                    />
-                  </div>
-                </div>
+                )}
                 <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting ? (editingSize ? "Updating..." : "Creating...") : (editingSize ? "Update" : "Create")}
                 </Button>
@@ -240,7 +212,6 @@ export default function AlloySizes() {
                     <TableHead>Specs</TableHead>
                     <TableHead>Diameter</TableHead>
                     <TableHead>Width</TableHead>
-                    <TableHead>Offset</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -252,7 +223,6 @@ export default function AlloySizes() {
                       </TableCell>
                       <TableCell>{size.diameter}"</TableCell>
                       <TableCell>{size.width}"</TableCell>
-                      <TableCell>ET{size.offset}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button 

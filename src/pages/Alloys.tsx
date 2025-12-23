@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Search, Edit, Trash2, Loader, Car } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Loader, Car, ImageIcon } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -92,6 +92,7 @@ export default function Alloys() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-[80px]">Image</TableHead>
                     <TableHead>Alloy Name</TableHead>
                     <TableHead>Design</TableHead>
                     <TableHead>PCD</TableHead>
@@ -104,6 +105,21 @@ export default function Alloys() {
                 <TableBody>
                   {data.items.map((alloy) => (
                     <TableRow key={alloy.id}>
+                      <TableCell>
+                        {alloy.image_url ? (
+                          <div className="h-10 w-10 relative rounded overflow-hidden bg-muted border">
+                            <img 
+                              src={alloy.image_url} 
+                              alt={alloy.alloyName} 
+                              className="object-cover w-full h-full"
+                            />
+                          </div>
+                        ) : (
+                          <div className="h-10 w-10 bg-muted flex items-center justify-center rounded border border-dashed">
+                            <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                        )}
+                      </TableCell>
                       <TableCell className="font-medium">
                         {alloy.alloyName}
                       </TableCell>

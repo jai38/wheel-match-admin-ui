@@ -33,7 +33,7 @@ import type { AlloyDesign } from "@/lib/api";
 export default function AlloyDesigns() {
   const [isOpen, setIsOpen] = useState(false);
   const [editingDesign, setEditingDesign] = useState<AlloyDesign | null>(null);
-  const [formData, setFormData] = useState({ name: "", description: "" });
+  const [formData, setFormData] = useState({ name: "" });
   const [page, setPage] = useState(1);
   const limit = 10;
 
@@ -72,7 +72,7 @@ export default function AlloyDesigns() {
 
   const handleEdit = (design: AlloyDesign) => {
     setEditingDesign(design);
-    setFormData({ name: design.name, description: design.description || "" });
+    setFormData({ name: design.name });
     setIsOpen(true);
   };
 
@@ -84,7 +84,7 @@ export default function AlloyDesigns() {
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
-      setFormData({ name: "", description: "" });
+      setFormData({ name: "" });
       setEditingDesign(null);
     }
     setIsOpen(open);
@@ -150,17 +150,6 @@ export default function AlloyDesigns() {
                     required
                   />
                 </div>
-                <div>
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    placeholder="Optional description"
-                    value={formData.description}
-                    onChange={(e) =>
-                      setFormData({ ...formData, description: e.target.value })
-                    }
-                  />
-                </div>
                 <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting ? (editingDesign ? "Updating..." : "Creating...") : (editingDesign ? "Update" : "Create")}
                 </Button>
@@ -181,7 +170,6 @@ export default function AlloyDesigns() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Name</TableHead>
-                    <TableHead>Description</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -190,9 +178,6 @@ export default function AlloyDesigns() {
                     <TableRow key={design.id}>
                       <TableCell className="font-medium">
                         {design.name}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {design.description || "N/A"}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
