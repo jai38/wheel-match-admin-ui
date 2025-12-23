@@ -242,42 +242,40 @@ export const alloysService = {
   },
 
   /**
-   * Upload images for an alloy using Presigned URLs
+   * Upload image for an alloy using Presigned URLs
+   * Replaces existing image if any
    */
-  async uploadAlloyImages(id: number, images: File[]): Promise<void> {
-    // Process each image sequentially (or parallel if desired, but sequential is safer for ordering/errors)
-    for (const image of images) {
-      // Step 1: Get Upload URL
-      const uploadUrlResponse = await apiClient.post<
-        ApiResponse<{ uploadUrl: string; key: string }>
-      >("/admin/alloys/images/upload-url", {
-        fileName: image.name,
-        fileType: image.type,
-        alloyId: id,
-      });
+  async uploadAlloyImage(id: number, image: File): Promise<void> {
+    // Step 1: Get Upload URL
+    const uploadUrlResponse = await apiClient.post<
+      ApiResponse<{ uploadUrl: string; key: string }>
+    >("/admin/alloys/images/upload-url", {
+      fileName: image.name,
+      fileType: image.type,
+      alloyId: id,
+    });
 
-      const { uploadUrl, key } = uploadUrlResponse.data.data!;
+    const { uploadUrl, key } = uploadUrlResponse.data.data!;
 
-      // Step 2: Upload to S3 directly (using raw axios to skip API interceptors)
-      await axios.put(uploadUrl, image, {
-        headers: {
-          "Content-Type": image.type,
-        },
-      });
+    // Step 2: Upload to S3 directly
+    await axios.put(uploadUrl, image, {
+      headers: {
+        "Content-Type": image.type,
+      },
+    });
 
-      // Step 3: Save Record Metadata
-      await apiClient.post<ApiResponse<unknown>>(
-        `/admin/alloys/${id}/images/metadata`,
-        { key }
-      );
-    }
+    // Step 3: Save Record Metadata
+    await apiClient.post<ApiResponse<unknown>>(
+      `/admin/alloys/${id}/images/metadata`,
+      { key }
+    );
   },
 
   /**
    * Delete an alloy image
    */
-  async deleteAlloyImage(alloyId: number, imageId: number): Promise<void> {
-    await apiClient.delete<ApiResponse>(`/admin/alloys/${alloyId}/images/${imageId}`);
+  async deleteAlloyImage(alloyId: number): Promise<void> {
+    await apiClient.delete<ApiResponse>(`/admin/alloys/${alloyId}/images`);
   },
 
   // ========== Alloy - Car Mappings ==========

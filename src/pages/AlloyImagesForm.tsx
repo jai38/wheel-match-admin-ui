@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useAlloy, useUploadAlloyImages, useDeleteAlloyImage } from "@/hooks/useAlloys";
+import { useAlloy, useUploadAlloyImage, useDeleteAlloyImage } from "@/hooks/useAlloys";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function AlloyImagesForm() {
@@ -20,58 +20,60 @@ export default function AlloyImagesForm() {
   const { toast } = useToast();
   const alloyId = id ? parseInt(id) : undefined;
 
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: alloy, isLoading: alloyLoading } = useAlloy(alloyId);
-  const uploadImages = useUploadAlloyImages();
+  const uploadImage = useUploadAlloyImage();
   const deleteImage = useDeleteAlloyImage();
   console.log("alloy images form render", { alloy });
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) {
-      const files = Array.from(event.target.files);
-      setSelectedFiles((prev) => [...prev, ...files]);
+    if (event.target.files && event.target.files[0]) {
+      const file = event.target.files[0];
+      setSelectedFile(file);
 
-      const newPreviews = files.map((file) => URL.createObjectURL(file));
-      setImagePreviews((prev) => [...prev, ...newPreviews]);
+      if (imagePreview) {
+        URL.revokeObjectURL(imagePreview);
+      }
+      const preview = URL.createObjectURL(file);
+      setImagePreview(preview);
     }
   };
 
-  const handleRemoveImage = (index: number) => {
-    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
-    setImagePreviews((prev) => {
-      const previewToRemove = prev[index];
-      URL.revokeObjectURL(previewToRemove);
-      return prev.filter((_, i) => i !== index);
-    });
+  const handleRemoveImage = () => {
+    setSelectedFile(null);
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+      setImagePreview(null);
+    }
   };
 
-  const handleExistingImageDelete = (imageId: number) => {
+  const handleExistingImageDelete = () => {
     if (!alloyId) return;
-    if (confirm("Are you sure you want to delete this image?")) {
-      deleteImage.mutate({ alloyId, imageId });
+    if (confirm("Are you sure you want to replace/delete this image?")) {
+      deleteImage.mutate({ alloyId });
     }
   };
 
   const handleUpload = () => {
-    if (!alloyId || selectedFiles.length === 0) {
+    if (!alloyId || !selectedFile) {
       toast({
-        title: "No images selected",
-        description: "Please select one or more images to upload.",
+        title: "No image selected",
+        description: "Please select an image to upload.",
         variant: "destructive",
       });
       return;
     }
 
-    uploadImages.mutate(
-      { id: alloyId, images: selectedFiles },
+    uploadImage.mutate(
+      { id: alloyId, image: selectedFile },
       {
         onSuccess: () => {
           toast({
             title: "Success!",
-            description: "Images have been uploaded and linked to the alloy.",
+            description: "Image has been uploaded and linked to the alloy.",
           });
           navigate(`/alloys`);
         },
@@ -101,19 +103,19 @@ export default function AlloyImagesForm() {
           </Button>
           <div>
             <h1 className="text-3xl font-bold tracking-tight">
-              Upload Images for Alloy
+              Manage Image for Alloy
             </h1>
             <p className="text-muted-foreground mt-1">
-              Add visuals for: <strong>{alloy?.alloyName}</strong>
+              Visual for: <strong>{alloy?.alloyName}</strong>
             </p>
           </div>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Alloy Images</CardTitle>
+            <CardTitle>Alloy Image</CardTitle>
             <CardDescription>
-              Upload one or more images for this alloy.
+              Upload a single image for this alloy. If an image already exists, it will be replaced.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -122,59 +124,53 @@ export default function AlloyImagesForm() {
               onClick={() => fileInputRef.current?.click()}>
               <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
               <p className="mt-4 text-sm text-muted-foreground">
-                Drag & drop images here, or click to select files
+                Drag & drop image here, or click to select file
               </p>
               <input
                 ref={fileInputRef}
                 type="file"
-                multiple
                 accept="image/*"
                 className="hidden"
                 onChange={handleFileChange}
               />
             </div>
-            {imagePreviews.length > 0 && (
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                {imagePreviews.map((preview, index) => (
-                  <div key={index} className="relative group">
-                    <img
-                      src={preview}
-                      alt={`Preview ${index}`}
-                      className="w-full h-auto rounded-lg object-cover aspect-square"
-                    />
-                    <Button
-                      variant="destructive"
-                      size="icon"
-                      className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => handleRemoveImage(index)}>
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
+            
+            {imagePreview && (
+              <div className="flex flex-col items-center gap-4">
+                <h3 className="text-lg font-medium">New Selection Preview</h3>
+                <div className="relative group max-w-sm">
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="w-full h-auto rounded-lg object-cover aspect-square"
+                  />
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={handleRemoveImage}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             )}
-            {alloy?.images && alloy.images.length > 0 && (
-              <div>
-                <h3 className="text-lg font-medium mt-6 mb-2">
-                  Existing Images
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                  {alloy.images.map((image, index) => (
-                    <div key={image.id || index} className="relative group">
-                      <img
-                        src={image.image_url}
-                        alt={`Alloy image ${index}`}
-                        className="w-full h-auto rounded-lg object-cover aspect-square"
-                      />
-                      <Button
-                        variant="destructive"
-                        size="icon"
-                        className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => handleExistingImageDelete(image.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
+
+            {alloy?.image_url && (
+              <div className="flex flex-col items-center gap-4 border-t pt-6">
+                <h3 className="text-lg font-medium">Current Image</h3>
+                <div className="relative group max-w-sm">
+                  <img
+                    src={alloy.image_url}
+                    alt="Current Alloy"
+                    className="w-full h-auto rounded-lg object-cover aspect-square"
+                  />
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={handleExistingImageDelete}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
             )}
@@ -182,14 +178,14 @@ export default function AlloyImagesForm() {
           <CardFooter className="flex justify-end">
             <Button
               onClick={handleUpload}
-              disabled={uploadImages.isPending || selectedFiles.length === 0}>
-              {uploadImages.isPending ? (
+              disabled={uploadImage.isPending || !selectedFile}>
+              {uploadImage.isPending ? (
                 <>
                   <Loader className="mr-2 h-4 w-4 animate-spin" />
                   Uploading...
                 </>
               ) : (
-                "Upload & Finish"
+                "Upload & Replace"
               )}
             </Button>
           </CardFooter>

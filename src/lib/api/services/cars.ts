@@ -182,34 +182,40 @@ export const carsService = {
   },
 
   /**
-   * Upload car images using Presigned URLs
+   * Upload car image using Presigned URLs
+   * Replaces existing image if any
    */
-  async uploadCarImages(id: number, images: File[]): Promise<void> {
-    for (const image of images) {
-      // Step 1: Get Upload URL
-      const uploadUrlResponse = await apiClient.post<
-        ApiResponse<{ uploadUrl: string; key: string }>
-      >("/admin/cars/images/upload-url", {
-        fileName: image.name,
-        fileType: image.type,
-        carId: id,
-      });
+  async uploadCarImage(id: number, image: File): Promise<void> {
+    // Step 1: Get Upload URL
+    const uploadUrlResponse = await apiClient.post<
+      ApiResponse<{ uploadUrl: string; key: string }>
+    >("/admin/cars/images/upload-url", {
+      fileName: image.name,
+      fileType: image.type,
+      carId: id,
+    });
 
-      const { uploadUrl, key } = uploadUrlResponse.data.data!;
+    const { uploadUrl, key } = uploadUrlResponse.data.data!;
 
-      // Step 2: Upload to S3 directly
-      await axios.put(uploadUrl, image, {
-        headers: {
-          "Content-Type": image.type,
-        },
-      });
+    // Step 2: Upload to S3 directly
+    await axios.put(uploadUrl, image, {
+      headers: {
+        "Content-Type": image.type,
+      },
+    });
 
-      // Step 3: Save Record Metadata
-      await apiClient.post<ApiResponse<unknown>>(
-        `/admin/cars/${id}/images/metadata`,
-        { key }
-      );
-    }
+    // Step 3: Save Record Metadata
+    await apiClient.post<ApiResponse<unknown>>(
+      `/admin/cars/${id}/images/metadata`,
+      { key }
+    );
+  },
+
+  /**
+   * Delete car image
+   */
+  async deleteCarImage(carId: number): Promise<void> {
+    await apiClient.delete<ApiResponse>(`/admin/cars/${carId}/images`);
   },
 
   /**

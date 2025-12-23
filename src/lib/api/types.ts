@@ -105,7 +105,7 @@ export interface Car {
   id: number;
   modelId: number;
   colorId: number;
-  images?: CarImage[];
+  carImage?: string;
   isActive?: boolean;
   isDefault?: boolean;
   color?: CarColor;
@@ -125,11 +125,7 @@ export interface Car {
 export interface CarCreateRequest {
   modelId: number;
   colorId: number;
-  x_front: number;
-  y_front: number;
-  x_rear: number;
-  y_rear: number;
-  wheelSize: number;
+  carImage?: string;
   isActive?: boolean;
   isDefault?: boolean;
 }
@@ -188,7 +184,7 @@ export interface Alloy {
   pcd?: AlloyPCD;
   finish?: AlloyFinish;
   size?: AlloySize;
-  images?: { id: number; image_url: string }[];
+  image_url?: string;
   carIds?: number[];
   modelIds?: number[];
   isActive?: boolean;
@@ -202,7 +198,7 @@ export interface AlloyCreateRequest {
   pcdId: number;
   finishId: number;
   sizeId: number;
-  images?: string[];
+  image_url?: string;
   carIds?: number[];
   modelIds?: number[];
   isActive?: boolean;

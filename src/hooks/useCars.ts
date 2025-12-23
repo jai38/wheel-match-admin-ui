@@ -89,12 +89,12 @@ export const useUpdateCar = () => {
   });
 };
 
-export const useUploadCarImages = () => {
+export const useUploadCarImage = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, images }: { id: number; images: File[] }) =>
-      carsService.uploadCarImages(id, images),
+    mutationFn: ({ id, image }: { id: number; image: File }) =>
+      carsService.uploadCarImage(id, image),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["car", variables.id] });
       queryClient.invalidateQueries({ queryKey: ["cars"] });

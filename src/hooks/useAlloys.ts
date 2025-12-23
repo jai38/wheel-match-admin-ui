@@ -110,19 +110,19 @@ export const useDeleteAlloy = () => {
   });
 };
 
-export const useUploadAlloyImages = () => {
+export const useUploadAlloyImage = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, images }: { id: number; images: File[] }) =>
-      alloysService.uploadAlloyImages(id, images),
+    mutationFn: ({ id, image }: { id: number; image: File }) =>
+      alloysService.uploadAlloyImage(id, image),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["alloys"] });
       queryClient.invalidateQueries({ queryKey: ["alloy", variables.id] });
-      toast.success("Alloy images uploaded successfully");
+      toast.success("Alloy image uploaded successfully");
     },
     onError: (error: { message?: string }) => {
-      toast.error(error.message || "Failed to upload alloy images");
+      toast.error(error.message || "Failed to upload alloy image");
     },
   });
 };
@@ -131,8 +131,8 @@ export const useDeleteAlloyImage = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ alloyId, imageId }: { alloyId: number; imageId: number }) =>
-      alloysService.deleteAlloyImage(alloyId, imageId),
+    mutationFn: ({ alloyId }: { alloyId: number }) =>
+      alloysService.deleteAlloyImage(alloyId),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["alloys"] });
       queryClient.invalidateQueries({ queryKey: ["alloy", variables.alloyId] });
