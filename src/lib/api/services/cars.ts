@@ -192,6 +192,7 @@ export const carsService = {
       >("/admin/cars/images/upload-url", {
         fileName: image.name,
         fileType: image.type,
+        carId: id,
       });
 
       const { uploadUrl, key } = uploadUrlResponse.data.data!;

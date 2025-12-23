@@ -127,6 +127,23 @@ export const useUploadAlloyImages = () => {
   });
 };
 
+export const useDeleteAlloyImage = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ alloyId, imageId }: { alloyId: number; imageId: number }) =>
+      alloysService.deleteAlloyImage(alloyId, imageId),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["alloys"] });
+      queryClient.invalidateQueries({ queryKey: ["alloy", variables.alloyId] });
+      toast.success("Alloy image deleted successfully");
+    },
+    onError: (error: { message?: string }) => {
+      toast.error(error.message || "Failed to delete alloy image");
+    },
+  });
+};
+
 // ========== Alloy - Car Mapping Hooks ==========
 
 export const useAlloyCars = (alloyId: number | null) => {

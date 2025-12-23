@@ -253,6 +253,7 @@ export const alloysService = {
       >("/admin/alloys/images/upload-url", {
         fileName: image.name,
         fileType: image.type,
+        alloyId: id,
       });
 
       const { uploadUrl, key } = uploadUrlResponse.data.data!;
@@ -270,6 +271,13 @@ export const alloysService = {
         { key }
       );
     }
+  },
+
+  /**
+   * Delete an alloy image
+   */
+  async deleteAlloyImage(alloyId: number, imageId: number): Promise<void> {
+    await apiClient.delete<ApiResponse>(`/admin/alloys/${alloyId}/images/${imageId}`);
   },
 
   // ========== Alloy - Car Mappings ==========

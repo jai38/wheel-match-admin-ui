@@ -389,6 +389,15 @@ export default function AlloyForm() {
         {/* </Tabs> */}
 
         <div className="flex justify-end gap-4">
+          {isEdit && alloyId && (
+            <Button
+              variant="secondary"
+              onClick={() => navigate(`/alloys/${alloyId}/images`)}
+              disabled={isSaving}>
+              <Upload className="mr-2 h-4 w-4" />
+              Manage Images
+            </Button>
+          )}
           <Button
             variant="outline"
             onClick={() => navigate("/alloys")}

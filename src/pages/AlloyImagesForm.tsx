@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Loader, Upload, X } from "lucide-react";
+import { ArrowLeft, Loader, Upload, X, Trash2 } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useAlloy, useUploadAlloyImages } from "@/hooks/useAlloys";
+import { useAlloy, useUploadAlloyImages, useDeleteAlloyImage } from "@/hooks/useAlloys";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function AlloyImagesForm() {
@@ -26,6 +26,7 @@ export default function AlloyImagesForm() {
 
   const { data: alloy, isLoading: alloyLoading } = useAlloy(alloyId);
   const uploadImages = useUploadAlloyImages();
+  const deleteImage = useDeleteAlloyImage();
   console.log("alloy images form render", { alloy });
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -45,6 +46,13 @@ export default function AlloyImagesForm() {
       URL.revokeObjectURL(previewToRemove);
       return prev.filter((_, i) => i !== index);
     });
+  };
+
+  const handleExistingImageDelete = (imageId: number) => {
+    if (!alloyId) return;
+    if (confirm("Are you sure you want to delete this image?")) {
+      deleteImage.mutate({ alloyId, imageId });
+    }
   };
 
   const handleUpload = () => {
@@ -145,19 +153,26 @@ export default function AlloyImagesForm() {
                 ))}
               </div>
             )}
-            {alloy?.alloyImages && alloy.alloyImages.length > 0 && (
+            {alloy?.images && alloy.images.length > 0 && (
               <div>
                 <h3 className="text-lg font-medium mt-6 mb-2">
                   Existing Images
                 </h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                  {alloy.alloyImages.map((imageUrl, index) => (
-                    <div key={index} className="relative">
+                  {alloy.images.map((image, index) => (
+                    <div key={image.id || index} className="relative group">
                       <img
-                        src={imageUrl}
+                        src={image.image_url}
                         alt={`Alloy image ${index}`}
                         className="w-full h-auto rounded-lg object-cover aspect-square"
                       />
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => handleExistingImageDelete(image.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   ))}
                 </div>

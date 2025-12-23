@@ -188,7 +188,7 @@ export interface Alloy {
   pcd?: AlloyPCD;
   finish?: AlloyFinish;
   size?: AlloySize;
-  images?: string[];
+  images?: { id: number; image_url: string }[];
   carIds?: number[];
   modelIds?: number[];
   isActive?: boolean;
