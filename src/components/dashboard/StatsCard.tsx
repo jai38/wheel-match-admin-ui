@@ -17,7 +17,7 @@ export function StatsCard({
   trendUp,
 }: StatsCardProps) {
   return (
-    <Card className="bg-gradient-card border-border/50 hover:shadow-md transition-shadow">
+    <Card className="border-border/50 hover:shadow-md transition-shadow">
       <CardContent className="p-6">
         <div className="flex items-center justify-between">
           <div>

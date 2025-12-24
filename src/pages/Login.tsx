@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLogin } from "@/hooks/useAuth";
 import { authService } from "@/lib/api";
+import logo from "@/assets/logo-wob.png";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -58,15 +59,17 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-hero p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md shadow-glow">
         <CardHeader className="space-y-1 text-center">
-          <div className="flex justify-center mb-4">
-            <div className="h-16 w-16 rounded-2xl bg-gradient-primary flex items-center justify-center shadow-glow">
-              <Car className="h-10 w-10 text-white" />
-            </div>
+          <div className="flex justify-center mb-6">
+            <img 
+              src={logo} 
+              alt="Neo Wheels" 
+              className="h-12 w-auto object-contain"
+            />
           </div>
-          <CardTitle className="text-2xl font-bold">Wheel Match Admin</CardTitle>
+          <CardTitle className="text-2xl font-bold">Admin Portal</CardTitle>
           <CardDescription>Sign in to manage your automotive inventory</CardDescription>
         </CardHeader>
         <CardContent>

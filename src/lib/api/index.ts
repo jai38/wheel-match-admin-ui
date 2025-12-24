@@ -2,6 +2,7 @@
 export { authService } from "./services/auth";
 export { carsService } from "./services/cars";
 export { alloysService } from "./services/alloys";
+export { dashboardService } from "./services/dashboard";
 
 // Export types
 export * from "./types";

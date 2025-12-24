@@ -11,26 +11,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useCars } from "@/hooks/useCars";
-import { useAlloys } from "@/hooks/useAlloys";
+import { useDashboardStats } from "@/hooks/useDashboard";
 
 export default function Dashboard() {
   const navigate = useNavigate();
   
-  // Fetch total counts (limit: 1 to get only pagination info)
-  const { data: totalCarsData, isLoading: totalCarsLoading } = useCars({ page: 1, limit: 1 });
-  const { data: totalAlloysData, isLoading: totalAlloysLoading } = useAlloys({ page: 1, limit: 1 });
-  
-  // Fetch active counts
-  const { data: activeCarsData, isLoading: activeCarsLoading } = useCars({ page: 1, limit: 1, isActive: true });
-  const { data: activeAlloysData, isLoading: activeAlloysLoading } = useAlloys({ page: 1, limit: 1, isActive: true });
+  // Fetch dashboard stats from dedicated API
+  const { data: stats, isLoading } = useDashboardStats();
 
-  const totalCars = totalCarsData?.pagination?.totalItems ?? 0;
-  const totalAlloys = totalAlloysData?.pagination?.totalItems ?? 0;
-  const activeCars = activeCarsData?.pagination?.totalItems ?? 0;
-  const activeAlloys = activeAlloysData?.pagination?.totalItems ?? 0;
-  
-  const isLoading = totalCarsLoading || totalAlloysLoading || activeCarsLoading || activeAlloysLoading;
+  const totalCars = stats?.cars.total ?? 0;
+  const totalAlloys = stats?.alloys.total ?? 0;
+  const activeCars = stats?.cars.active ?? 0;
+  const activeAlloys = stats?.alloys.active ?? 0;
 
   return (
     <MainLayout>
@@ -43,7 +35,7 @@ export default function Dashboard() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           {isLoading ? (
             <Skeleton className="h-32 rounded-lg" />
           ) : (
@@ -98,7 +90,7 @@ export default function Dashboard() {
               Common tasks to manage your inventory
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex gap-4">
+          <CardContent className="flex flex-col sm:flex-row gap-4">
             <Button onClick={() => navigate("/cars/new")} className="flex-1">
               + Add New Car
             </Button>
