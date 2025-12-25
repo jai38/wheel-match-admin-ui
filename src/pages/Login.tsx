@@ -8,7 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLogin } from "@/hooks/useAuth";
 import { authService } from "@/lib/api";
-import logo from "@/assets/logo-wob.png";
+import logo from "@/assets/logo-black-text.png";
 
 export default function Login() {
   const navigate = useNavigate();

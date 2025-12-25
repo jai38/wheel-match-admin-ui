@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import { useProfile, useLogout } from "@/hooks/useAuth";
 import { useState } from "react";
-import logo from "@/assets/logo-wob.png";
+import logo from "@/assets/logo-black-text.png";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
