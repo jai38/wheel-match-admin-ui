@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Search, Edit, Trash2, Loader, Car, ImageIcon } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useAlloys, useDeleteAlloy } from "@/hooks/useAlloys";
+import { useAlloys, useDeleteAlloy, useUpdateAlloy } from "@/hooks/useAlloys";
 import { CarListModal } from "@/components/CarListModal";
 import type { Alloy } from "@/lib/api";
 
@@ -30,6 +31,11 @@ export default function Alloys() {
     search: searchQuery,
   });
   const deleteAlloy = useDeleteAlloy();
+  const updateAlloy = useUpdateAlloy();
+
+  const handleToggleStatus = (alloy: Alloy, checked: boolean) => {
+    updateAlloy.mutate({ id: alloy.id, data: { isActive: checked } });
+  };
 
   const handleDelete = (alloyId: number) => {
     if (confirm("Are you sure you want to delete this alloy?")) {
@@ -98,6 +104,7 @@ export default function Alloys() {
                     <TableHead>PCD</TableHead>
                     <TableHead>Finish</TableHead>
                     <TableHead>Size</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead>Mapped Cars</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -127,6 +134,12 @@ export default function Alloys() {
                       <TableCell>{alloy.pcd?.name || "N/A"}</TableCell>
                       <TableCell>{alloy.finish?.name || "N/A"}</TableCell>
                       <TableCell>{alloy.size?.specs || "N/A"}</TableCell>
+                      <TableCell>
+                        <Switch
+                          checked={alloy.isActive !== false}
+                          onCheckedChange={(checked) => handleToggleStatus(alloy, checked)}
+                        />
+                      </TableCell>
                       <TableCell>
                         <Button
                           variant="outline"

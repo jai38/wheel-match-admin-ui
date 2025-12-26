@@ -54,6 +54,7 @@ export default function AlloyForm() {
     finishId: 0,
     sizeId: 0,
     buy_url: "",
+    isActive: true,
   });
   const [alloyImages, setAlloyImages] = useState<string[]>([]);
 
@@ -88,6 +89,7 @@ export default function AlloyForm() {
         finishId: existingAlloy.finishId,
         sizeId: existingAlloy.sizeId,
         buy_url: existingAlloy.buy_url,
+        isActive: existingAlloy.isActive ?? true,
       });
     }
   }, [existingAlloy, isEdit]);
@@ -240,6 +242,17 @@ export default function AlloyForm() {
               </div>
             ) : (
               <>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="active"
+                    checked={formData.isActive}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, isActive: checked })
+                    }
+                  />
+                  <Label htmlFor="active">Active Status</Label>
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="size">
                     Size (Diameter x Width) *
