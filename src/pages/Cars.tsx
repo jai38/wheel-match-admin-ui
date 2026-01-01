@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Search, Edit, Trash2, Loader } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Loader, Download } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,8 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useCars, useUpdateCar, useDeleteCar } from "@/hooks/useCars";
+import { carsService } from "@/lib/api";
+import { downloadCSV } from "@/lib/exportUtils";
 import type { Car } from "@/lib/api";
 
 export default function Cars() {
@@ -22,8 +24,9 @@ export default function Cars() {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [page, setPage] = useState(1);
+  const [isExporting, setIsExporting] = useState(false);
   const limit = 10;
-  
+
   // Debounce search query with 300ms delay
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -35,16 +38,60 @@ export default function Cars() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  const handleExport = async () => {
+    try {
+      setIsExporting(true);
+      const response = await carsService.getCars({ limit: 1000 });
+      const cars = response.items || [];
+
+      // Group by Model ID
+      const grouped = cars.reduce((acc, car) => {
+        const modelId = car.modelId;
+        if (!acc[modelId]) {
+          acc[modelId] = {
+            make: car.model?.make?.name || "",
+            model: car.model?.name || "",
+            name: `${car.model?.make?.name || ""} ${
+              car.model?.name || ""
+            }`.trim(),
+            colors: new Set<string>(),
+          };
+        }
+        if (car.color?.name) {
+          acc[modelId].colors.add(car.color.name);
+        }
+        return acc;
+      }, {} as Record<number, { make: string; model: string; name: string; colors: Set<string> }>);
+
+      const csvData = Object.values(grouped).map((item) => ({
+        Make: item.make,
+        Model: item.model,
+        Name: item.name,
+        Colors: Array.from(item.colors).join(", "),
+      }));
+
+      downloadCSV(csvData, "cars_export.csv");
+    } catch (error) {
+      console.error("Export failed", error);
+      alert("Failed to export data");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   // Only include search in API call if it's not empty
-  const searchParams = debouncedSearchQuery.trim() 
+  const searchParams = debouncedSearchQuery.trim()
     ? { page, limit, search: debouncedSearchQuery.trim() }
     : { page, limit };
-  
+
   const { data, isLoading, error } = useCars(searchParams);
   const updateCar = useUpdateCar();
   const deleteCar = useDeleteCar();
 
-  const handleToggleActive = (carId: number, currentStatus: boolean | undefined) => {
+  const handleToggleActive = (
+    carId: number,
+    currentStatus: boolean | undefined,
+  ) => {
     updateCar.mutate({
       id: carId,
       data: { isActive: !currentStatus },
@@ -73,15 +120,33 @@ export default function Cars() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Car Master</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+              Car Master
+            </h1>
             <p className="text-sm sm:text-base text-muted-foreground mt-1">
               Manage car makes, models, colors, and wheel coordinates
             </p>
           </div>
-          <Button onClick={() => navigate("/cars/new")} className="w-full sm:w-auto">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Car Make
-          </Button>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <Button
+              variant="outline"
+              onClick={handleExport}
+              disabled={isExporting}
+              className="w-full sm:w-auto">
+              {isExporting ? (
+                <Loader className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4 mr-2" />
+              )}
+              Export CSV
+            </Button>
+            <Button
+              onClick={() => navigate("/cars/new")}
+              className="w-full sm:w-auto">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Car Make
+            </Button>
+          </div>
         </div>
 
         {/* Search */}
@@ -112,15 +177,23 @@ export default function Cars() {
                       <TableHead className="whitespace-nowrap">Make</TableHead>
                       <TableHead className="whitespace-nowrap">Model</TableHead>
                       <TableHead className="whitespace-nowrap">Color</TableHead>
-                      <TableHead className="whitespace-nowrap">Active</TableHead>
-                      <TableHead className="text-right whitespace-nowrap">Actions</TableHead>
+                      <TableHead className="whitespace-nowrap">
+                        Active
+                      </TableHead>
+                      <TableHead className="text-right whitespace-nowrap">
+                        Actions
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {data.items.map((car) => (
                       <TableRow key={car.id}>
-                        <TableCell className="font-medium whitespace-nowrap">{car.model?.make?.name || "N/A"}</TableCell>
-                        <TableCell className="whitespace-nowrap">{car.model?.name || "N/A"}</TableCell>
+                        <TableCell className="font-medium whitespace-nowrap">
+                          {car.model?.make?.name || "N/A"}
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap">
+                          {car.model?.name || "N/A"}
+                        </TableCell>
                         <TableCell className="whitespace-nowrap">
                           <Badge variant="secondary">
                             {car.color?.name || "N/A"}
@@ -129,7 +202,9 @@ export default function Cars() {
                         <TableCell>
                           <Switch
                             checked={car.isActive || false}
-                            onCheckedChange={() => handleToggleActive(car.id, car.isActive)}
+                            onCheckedChange={() =>
+                              handleToggleActive(car.id, car.isActive)
+                            }
                             disabled={updateCar.isPending}
                           />
                         </TableCell>
@@ -138,16 +213,14 @@ export default function Cars() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => navigate(`/cars/${car.id}`)}
-                            >
+                              onClick={() => navigate(`/cars/${car.id}`)}>
                               <Edit className="h-4 w-4" />
                             </Button>
                             <Button
                               variant="ghost"
                               size="icon"
                               onClick={() => handleDelete(car.id)}
-                              disabled={deleteCar.isPending}
-                            >
+                              disabled={deleteCar.isPending}>
                               <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>
                           </div>
@@ -157,11 +230,13 @@ export default function Cars() {
                   </TableBody>
                 </Table>
               </div>
-              
+
               {/* Pagination */}
               <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-t gap-4 sm:gap-0">
                 <p className="text-sm text-muted-foreground text-center sm:text-left">
-                  Showing page {data.pagination.currentPage || page} of {data.pagination.totalPages} ({data.pagination.totalItems} total items)
+                  Showing page {data.pagination.currentPage || page} of{" "}
+                  {data.pagination.totalPages} ({data.pagination.totalItems}{" "}
+                  total items)
                 </p>
                 <div className="flex gap-2 w-full sm:w-auto justify-center sm:justify-end">
                   <Button
@@ -169,8 +244,7 @@ export default function Cars() {
                     size="sm"
                     onClick={() => setPage(Math.max(1, page - 1))}
                     disabled={page === 1}
-                    className="flex-1 sm:flex-none"
-                  >
+                    className="flex-1 sm:flex-none">
                     Previous
                   </Button>
                   <Button
@@ -178,8 +252,7 @@ export default function Cars() {
                     size="sm"
                     onClick={() => setPage(page + 1)}
                     disabled={page >= data.pagination.totalPages}
-                    className="flex-1 sm:flex-none"
-                  >
+                    className="flex-1 sm:flex-none">
                     Next
                   </Button>
                 </div>

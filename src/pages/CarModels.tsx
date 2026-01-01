@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { Plus, Edit, Trash2, Loader, Settings } from "lucide-react";
+import { Plus, Edit, Trash2, Loader, Settings, Download } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
+import { downloadCSV } from "@/lib/exportUtils";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -37,7 +38,7 @@ import {
   useCarModels,
   useCreateCarModel,
   useUpdateCarModel,
-  useDeleteCarModel
+  useDeleteCarModel,
 } from "@/hooks/useCars";
 
 const STORAGE_KEY_MAKE = "carMaster_selectedMake";
@@ -45,13 +46,61 @@ const STORAGE_KEY_MAKE = "carMaster_selectedMake";
 export default function CarModels() {
   const [isOpen, setIsOpen] = useState(false);
   const [editingModelId, setEditingModelId] = useState<number | null>(null);
-  const [formData, setFormData] = useState({ name: "", makeId: "", defaultAlloySize: "" });
+  const [formData, setFormData] = useState({
+    name: "",
+    makeId: "",
+    defaultAlloySize: "",
+  });
   const [filterMakeId, setFilterMakeId] = useState<string>("");
   const [page, setPage] = useState(1);
   const [selectedModel, setSelectedModel] = useState<CarModel | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
   const limit = 10;
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  const handleExport = async () => {
+    try {
+      setIsExporting(true);
+      const response = await carsService.getCars({ limit: 1000 });
+      const cars = response.items || [];
+
+      // Group by Model ID
+      const grouped = cars.reduce((acc, car) => {
+        const modelId = car.modelId;
+        if (!acc[modelId]) {
+          acc[modelId] = {
+            make: car.model?.make?.name || '',
+            model: car.model?.name || '',
+            name: `${car.model?.make?.name || ''} ${car.model?.name || ''}`.trim(),
+            defaultAlloySize: car.model?.defaultAlloySize ? `${car.model.defaultAlloySize}"` : '',
+            status: car.model?.isActive ? 'Active' : 'Inactive',
+            colors: new Set<string>()
+          };
+        }
+        if (car.color?.name) {
+          acc[modelId].colors.add(car.color.name);
+        }
+        return acc;
+      }, {} as Record<number, { make: string, model: string, name: string, defaultAlloySize: string, status: string, colors: Set<string> }>);
+
+      const csvData = Object.values(grouped).map(item => ({
+        Make: item.make,
+        Model: item.model,
+        Name: item.name,
+        'Default Alloy Size': item.defaultAlloySize,
+        Status: item.status,
+        Colors: Array.from(item.colors).join(', ')
+      }));
+
+      downloadCSV(csvData, 'cars_export.csv');
+    } catch (error) {
+      console.error("Export failed", error);
+      alert("Failed to export data");
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   // Load saved makeId from localStorage on mount
   useEffect(() => {
@@ -83,7 +132,7 @@ export default function CarModels() {
   const makeIdNum = filterMakeId ? parseInt(filterMakeId) : null;
   const isValidMakeId =
     makeIdNum !== null && !isNaN(makeIdNum) && makeIdNum > 0;
-  
+
   const { data, isLoading, error } = useCarModels({
     page,
     limit,
@@ -99,7 +148,9 @@ export default function CarModels() {
     const modelData = {
       name: formData.name,
       makeId: parseInt(formData.makeId),
-      defaultAlloySize: formData.defaultAlloySize ? parseInt(formData.defaultAlloySize) : undefined,
+      defaultAlloySize: formData.defaultAlloySize
+        ? parseInt(formData.defaultAlloySize)
+        : undefined,
     };
 
     if (editingModelId) {
@@ -108,14 +159,14 @@ export default function CarModels() {
         {
           onSuccess: () => {
             handleOpenChange(false);
-          }
-        }
+          },
+        },
       );
     } else {
       createMutation.mutate(modelData, {
         onSuccess: () => {
           handleOpenChange(false);
-        }
+        },
       });
     }
   };
@@ -144,7 +195,11 @@ export default function CarModels() {
     if (open) {
       if (!editingModelId) {
         const savedMakeId = localStorage.getItem(STORAGE_KEY_MAKE);
-        setFormData({ name: "", makeId: savedMakeId || "", defaultAlloySize: "" });
+        setFormData({
+          name: "",
+          makeId: savedMakeId || "",
+          defaultAlloySize: "",
+        });
       }
     } else {
       setFormData({ name: "", makeId: "", defaultAlloySize: "" });
@@ -184,84 +239,118 @@ export default function CarModels() {
               Manage car models and their makes
             </p>
           </div>
-          <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Car Model
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>{editingModelId ? "Edit Car Model" : "Add Car Model"}</DialogTitle>
-                <DialogDescription>
-                  {editingModelId ? "Update existing car model" : "Create a new car model linked to a make"}
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <Label htmlFor="name">Model Name</Label>
-                  <Input
-                    id="name"
-                    placeholder="e.g., Camry"
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="makeId">Car Make</Label>
-                  <Select
-                    value={formData.makeId}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, makeId: value })
-                    }>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a make" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {makesLoading ? (
-                        <SelectItem value="loading" disabled>
-                          Loading...
-                        </SelectItem>
-                      ) : makesError ? (
-                        <SelectItem value="error" disabled>
-                          Error loading makes
-                        </SelectItem>
-                      ) : makes.length === 0 ? (
-                        <SelectItem value="empty" disabled>
-                          No makes available
-                        </SelectItem>
-                      ) : (
-                        makes.map((make: CarMake) => (
-                          <SelectItem key={make.id} value={make.id.toString()}>
-                            {make.name}
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="defaultAlloySize">Default Alloy Size (inches)</Label>
-                  <Input
-                    id="defaultAlloySize"
-                    type="number"
-                    placeholder="e.g., 18"
-                    value={formData.defaultAlloySize}
-                    onChange={(e) =>
-                      setFormData({ ...formData, defaultAlloySize: e.target.value })
-                    }
-                  />
-                </div>
-                <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                  {createMutation.isPending || updateMutation.isPending ? (editingModelId ? "Updating..." : "Creating...") : (editingModelId ? "Update" : "Create")}
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={handleExport}
+              disabled={isExporting}>
+              {isExporting ? (
+                <Loader className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4 mr-2" />
+              )}
+              Export Cars CSV
+            </Button>
+            <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Car Model
                 </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingModelId ? "Edit Car Model" : "Add Car Model"}
+                  </DialogTitle>
+                  <DialogDescription>
+                    {editingModelId
+                      ? "Update existing car model"
+                      : "Create a new car model linked to a make"}
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <Label htmlFor="name">Model Name</Label>
+                    <Input
+                      id="name"
+                      placeholder="e.g., Camry"
+                      value={formData.name}
+                      onChange={(e) =>
+                        setFormData({ ...formData, name: e.target.value })
+                      }
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="makeId">Car Make</Label>
+                    <Select
+                      value={formData.makeId}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, makeId: value })
+                      }>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a make" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {makesLoading ? (
+                          <SelectItem value="loading" disabled>
+                            Loading...
+                          </SelectItem>
+                        ) : makesError ? (
+                          <SelectItem value="error" disabled>
+                            Error loading makes
+                          </SelectItem>
+                        ) : makes.length === 0 ? (
+                          <SelectItem value="empty" disabled>
+                            No makes available
+                          </SelectItem>
+                        ) : (
+                          makes.map((make: CarMake) => (
+                            <SelectItem
+                              key={make.id}
+                              value={make.id.toString()}>
+                              {make.name}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="defaultAlloySize">
+                      Default Alloy Size (inches)
+                    </Label>
+                    <Input
+                      id="defaultAlloySize"
+                      type="number"
+                      placeholder="e.g., 18"
+                      value={formData.defaultAlloySize}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          defaultAlloySize: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    disabled={
+                      createMutation.isPending || updateMutation.isPending
+                    }>
+                    {createMutation.isPending || updateMutation.isPending
+                      ? editingModelId
+                        ? "Updating..."
+                        : "Creating..."
+                      : editingModelId
+                      ? "Update"
+                      : "Create"}
+                  </Button>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
         {/* Filter */}
@@ -339,37 +428,38 @@ export default function CarModels() {
                         </TableCell>
                         <TableCell>{model.make?.name || "N/A"}</TableCell>
                         <TableCell>
-                          {model.defaultAlloySize ? `${model.defaultAlloySize}"` : "-"}
+                          {model.defaultAlloySize
+                            ? `${model.defaultAlloySize}"`
+                            : "-"}
                         </TableCell>
                         <TableCell>
                           <Switch
                             checked={model.isActive !== false}
-                            onCheckedChange={(checked) => handleToggleStatus(model, checked)}
+                            onCheckedChange={(checked) =>
+                              handleToggleStatus(model, checked)
+                            }
                           />
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              onClick={() => handleEdit(model)}
-                            >
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleEdit(model)}>
                               <Edit className="h-4 w-4" />
                             </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
+                            <Button
+                              variant="ghost"
+                              size="icon"
                               className="text-destructive hover:text-destructive"
                               onClick={() => handleDelete(model.id)}
-                              disabled={deleteMutation.isPending}
-                            >
+                              disabled={deleteMutation.isPending}>
                               <Trash2 className="h-4 w-4" />
                             </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => setSelectedModel(model)}
-                            >
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setSelectedModel(model)}>
                               <Settings className="h-4 w-4 mr-2" />
                               Manage
                             </Button>
@@ -411,11 +501,11 @@ export default function CarModels() {
             )}
           </div>
         )}
-        
-        <ManageModelSheet 
-          model={selectedModel} 
-          isOpen={!!selectedModel} 
-          onClose={() => setSelectedModel(null)} 
+
+        <ManageModelSheet
+          model={selectedModel}
+          isOpen={!!selectedModel}
+          onClose={() => setSelectedModel(null)}
         />
       </div>
     </MainLayout>

@@ -1,6 +1,15 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Search, Edit, Trash2, Loader, Car, ImageIcon } from "lucide-react";
+import {
+  Plus,
+  Search,
+  Edit,
+  Trash2,
+  Loader,
+  Car,
+  ImageIcon,
+  Download,
+} from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
@@ -15,6 +24,8 @@ import {
 } from "@/components/ui/table";
 import { useAlloys, useDeleteAlloy, useUpdateAlloy } from "@/hooks/useAlloys";
 import { CarListModal } from "@/components/CarListModal";
+import { alloysService } from "@/lib/api";
+import { downloadCSV } from "@/lib/exportUtils";
 import type { Alloy } from "@/lib/api";
 
 export default function Alloys() {
@@ -24,6 +35,7 @@ export default function Alloys() {
   const limit = 10;
   const [selectedAlloyId, setSelectedAlloyId] = useState<number | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   const { data, isLoading, error } = useAlloys({
     page,
@@ -32,6 +44,31 @@ export default function Alloys() {
   });
   const deleteAlloy = useDeleteAlloy();
   const updateAlloy = useUpdateAlloy();
+
+  const handleExport = async () => {
+    try {
+      setIsExporting(true);
+      const response = await alloysService.getAlloys({ limit: 1000 });
+      const alloys = response.items || [];
+
+      const csvData = alloys.map(alloy => ({
+        Design: alloy.design?.name || '',
+        Size: alloy.size?.specs || '',
+        Finish: alloy.finish?.name || '',
+        PCD: alloy.pcd?.name || '',
+        Name: alloy.alloyName || '',
+        Status: alloy.isActive ? 'Active' : 'Inactive',
+        Image: alloy.image_url || ''
+      }));
+
+      downloadCSV(csvData, 'alloys_export.csv');
+    } catch (error) {
+      console.error("Export failed", error);
+      alert("Failed to export data");
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const handleToggleStatus = (alloy: Alloy, checked: boolean) => {
     updateAlloy.mutate({ id: alloy.id, data: { isActive: checked } });
@@ -68,10 +105,23 @@ export default function Alloys() {
               Manage alloy wheels, finishes, and compatible cars
             </p>
           </div>
-          <Button onClick={() => navigate("/alloys/new")}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Alloy
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={handleExport}
+              disabled={isExporting}>
+              {isExporting ? (
+                <Loader className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4 mr-2" />
+              )}
+              Export CSV
+            </Button>
+            <Button onClick={() => navigate("/alloys/new")}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Alloy
+            </Button>
+          </div>
         </div>
 
         {/* Search */}
@@ -115,9 +165,9 @@ export default function Alloys() {
                       <TableCell>
                         {alloy.image_url ? (
                           <div className="h-10 w-10 relative rounded overflow-hidden bg-muted border">
-                            <img 
-                              src={alloy.image_url} 
-                              alt={alloy.alloyName} 
+                            <img
+                              src={alloy.image_url}
+                              alt={alloy.alloyName}
                               className="object-cover w-full h-full"
                             />
                           </div>
@@ -137,7 +187,9 @@ export default function Alloys() {
                       <TableCell>
                         <Switch
                           checked={alloy.isActive !== false}
-                          onCheckedChange={(checked) => handleToggleStatus(alloy, checked)}
+                          onCheckedChange={(checked) =>
+                            handleToggleStatus(alloy, checked)
+                          }
                         />
                       </TableCell>
                       <TableCell>
