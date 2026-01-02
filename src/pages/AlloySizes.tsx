@@ -25,7 +25,7 @@ import { alloysService } from "@/lib/api/services/alloys";
 import {
   useCreateAlloySize,
   useUpdateAlloySize,
-  useDeleteAlloySize
+  useDeleteAlloySize,
 } from "@/hooks/useAlloys";
 import type { AlloySize } from "@/lib/api";
 
@@ -63,8 +63,8 @@ export default function AlloySizes() {
         {
           onSuccess: () => {
             handleOpenChange(false);
-          }
-        }
+          },
+        },
       );
     } else {
       createMutation.mutate(
@@ -73,8 +73,8 @@ export default function AlloySizes() {
         {
           onSuccess: () => {
             handleOpenChange(false);
-          }
-        }
+          },
+        },
       );
     }
   };
@@ -144,9 +144,13 @@ export default function AlloySizes() {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>{editingSize ? "Edit Alloy Size" : "Add Alloy Size"}</DialogTitle>
+                <DialogTitle>
+                  {editingSize ? "Edit Alloy Size" : "Add Alloy Size"}
+                </DialogTitle>
                 <DialogDescription>
-                  {editingSize ? "Update existing alloy wheel size specification" : "Create a new alloy wheel size specification"}
+                  {editingSize
+                    ? "Update existing alloy wheel size specification"
+                    : "Create a new alloy wheel size specification"}
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -173,7 +177,7 @@ export default function AlloySizes() {
                       id="width"
                       type="number"
                       step="0.1"
-                      min="5"
+                      min="4"
                       max="20"
                       placeholder="e.g., 8"
                       value={formData.width}
@@ -187,11 +191,19 @@ export default function AlloySizes() {
                 {formData.diameter && formData.width && (
                   <div className="p-3 bg-muted rounded-md border">
                     <p className="text-sm font-medium">Generated Spec:</p>
-                    <p className="text-lg font-bold">{formData.diameter}x{formData.width}</p>
+                    <p className="text-lg font-bold">
+                      {formData.diameter}x{formData.width}
+                    </p>
                   </div>
                 )}
                 <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? (editingSize ? "Updating..." : "Creating...") : (editingSize ? "Update" : "Create")}
+                  {isSubmitting
+                    ? editingSize
+                      ? "Updating..."
+                      : "Creating..."
+                    : editingSize
+                    ? "Update"
+                    : "Create"}
                 </Button>
               </form>
             </DialogContent>
@@ -225,20 +237,18 @@ export default function AlloySizes() {
                       <TableCell>{size.width}"</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={() => handleEdit(size)}
-                          >
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEdit(size)}>
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             className="text-destructive hover:text-destructive"
                             onClick={() => handleDelete(size.id)}
-                            disabled={deleteMutation.isPending}
-                          >
+                            disabled={deleteMutation.isPending}>
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>

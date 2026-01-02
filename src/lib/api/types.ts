@@ -164,7 +164,7 @@ export interface AlloyFinish {
 export interface AlloySize {
   id: number;
   diameter: number; // 10-30 inches
-  width: number; // 5-20 inches
+  width: number; // 4-20 inches
   offset: number; // -50 to 100
   specs: string; // Display format (e.g., "17x8 ET35")
   createdAt?: string;
