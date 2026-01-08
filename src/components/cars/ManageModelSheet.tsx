@@ -1,6 +1,14 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader, Plus, Trash2, Upload, Car as CarIcon, ImageIcon, Edit, X, Settings } from "lucide-react";
+import {
+  Loader,
+  Plus,
+  Trash2,
+  Car as CarIcon,
+  ImageIcon,
+  Edit,
+  X,
+} from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -44,20 +52,24 @@ interface ManageModelSheetProps {
   onClose: () => void;
 }
 
-export function ManageModelSheet({ model, isOpen, onClose }: ManageModelSheetProps) {
+export function ManageModelSheet({
+  model,
+  isOpen,
+  onClose,
+}: ManageModelSheetProps) {
   const [selectedColorId, setSelectedColorId] = useState<string>("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDefault, setIsDefault] = useState(false);
   const [editingCarId, setEditingCarId] = useState<number | null>(null);
-  
+
   // Wheel Config State
   const [selectedAlloyId, setSelectedAlloyId] = useState<string>("");
   const [wheelConfig, setWheelConfig] = useState({
-    x_front: 0,
-    y_front: 0,
-    x_rear: 0,
-    y_rear: 0,
-    wheelSize: 300,
+    x_front: 525,
+    y_front: 775,
+    x_rear: 1445,
+    y_rear: 775,
+    wheelSize: 190,
   });
 
   const queryClient = useQueryClient();
@@ -67,11 +79,11 @@ export function ManageModelSheet({ model, isOpen, onClose }: ManageModelSheetPro
     if (model) {
       console.log("Model updated in ManageModelSheet", model);
       setWheelConfig({
-        x_front: model.x_front || 0,
-        y_front: model.y_front || 0,
-        x_rear: model.x_rear || 0,
-        y_rear: model.y_rear || 0,
-        wheelSize: model.alloySize || 300,
+        x_front: model.x_front || 525,
+        y_front: model.y_front || 775,
+        x_rear: model.x_rear || 1445,
+        y_rear: model.y_rear || 775,
+        wheelSize: model.alloySize || 190,
       });
     }
   }, [model]);
@@ -95,17 +107,24 @@ export function ManageModelSheet({ model, isOpen, onClose }: ManageModelSheetPro
   const cars = carsData?.items || [];
 
   // Fetch Alloys for preview
-  const { data: alloysData, isLoading: alloysLoading } = useAlloys({ limit: 100 });
-  
+  const { data: alloysData, isLoading: alloysLoading } = useAlloys({
+    limit: 100,
+  });
+
   // Robustly get alloys array from paginated response
   const alloys = alloysData?.items || alloysData?.alloys || [];
 
-  const selectedAlloy = alloys.find(a => a.id.toString() === selectedAlloyId);
-  const previewCar = cars.length > 0 ? cars.find(c => c.isDefault) || cars[0] : null;
+  const selectedAlloy =
+    alloys.find((a) => a.id.toString() === selectedAlloyId) || alloys[0];
+  const previewCar =
+    cars.length > 0 ? cars.find((c) => c.isDefault) || cars[0] : null;
   const previewCarImage = previewCar?.carImage;
   // Fallback to legacy images array if image_url is missing
-  const previewAlloyImage = selectedAlloy?.image_url || (selectedAlloy as any)?.images?.[0]?.image_url || (selectedAlloy as any)?.images?.[0];
-  
+  const previewAlloyImage =
+    selectedAlloy?.image_url ||
+    (selectedAlloy as any)?.images?.[0]?.image_url ||
+    (selectedAlloy as any)?.images?.[0];
+
   const updateModelMutation = useUpdateCarModel();
 
   const handleSaveWheelConfig = () => {
@@ -118,7 +137,7 @@ export function ManageModelSheet({ model, isOpen, onClose }: ManageModelSheetPro
         x_rear: wheelConfig.x_rear,
         y_rear: wheelConfig.y_rear,
         alloySize: wheelConfig.wheelSize,
-      }
+      },
     });
   };
 
@@ -129,7 +148,7 @@ export function ManageModelSheet({ model, isOpen, onClose }: ManageModelSheetPro
       const newCar = await carsService.createCar({
         modelId: model.id,
         colorId: parseInt(selectedColorId),
-        wheelSize: model.defaultAlloySize || 0, // Using default from model
+        wheelSize: model.defaultAlloySize || 190, // Using default from model
         isActive: true,
         isDefault: isDefault,
       });
@@ -192,7 +211,7 @@ export function ManageModelSheet({ model, isOpen, onClose }: ManageModelSheetPro
       toast.error("Please select a color");
       return;
     }
-    
+
     if (editingCarId) {
       updateCarMutation.mutate();
     } else {
@@ -208,7 +227,7 @@ export function ManageModelSheet({ model, isOpen, onClose }: ManageModelSheetPro
     setEditingCarId(car.id);
     setSelectedColorId(car.colorId.toString());
     setIsDefault(car.isDefault || false);
-    setSelectedFile(null); 
+    setSelectedFile(null);
   };
 
   if (!model) return null;
@@ -230,7 +249,7 @@ export function ManageModelSheet({ model, isOpen, onClose }: ManageModelSheetPro
           </TabsList>
 
           <TabsContent value="variants" className="space-y-6">
-             <div className="py-6 space-y-8">
+            <div className="py-6 space-y-8">
               {/* Add/Edit Variant Section */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -244,19 +263,27 @@ export function ManageModelSheet({ model, isOpen, onClose }: ManageModelSheetPro
                     </Button>
                   )}
                 </div>
-                <form onSubmit={handleSubmit} className="space-y-4 p-4 border rounded-lg bg-muted/20">
+                <form
+                  onSubmit={handleSubmit}
+                  className="space-y-4 p-4 border rounded-lg bg-muted/20">
                   <div className="space-y-2">
                     <Label>Color</Label>
-                    <Select value={selectedColorId} onValueChange={setSelectedColorId}>
+                    <Select
+                      value={selectedColorId}
+                      onValueChange={setSelectedColorId}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select color" />
                       </SelectTrigger>
                       <SelectContent>
                         {colorsLoading ? (
-                          <SelectItem value="loading" disabled>Loading...</SelectItem>
+                          <SelectItem value="loading" disabled>
+                            Loading...
+                          </SelectItem>
                         ) : (
                           colors.map((color: CarColor) => (
-                            <SelectItem key={color.id} value={color.id.toString()}>
+                            <SelectItem
+                              key={color.id}
+                              value={color.id.toString()}>
                               {color.name}
                             </SelectItem>
                           ))
@@ -271,7 +298,9 @@ export function ManageModelSheet({ model, isOpen, onClose }: ManageModelSheetPro
                       <Input
                         type="file"
                         accept="image/*"
-                        onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                        onChange={(e) =>
+                          setSelectedFile(e.target.files?.[0] || null)
+                        }
                         className="cursor-pointer"
                       />
                     </div>
@@ -291,19 +320,25 @@ export function ManageModelSheet({ model, isOpen, onClose }: ManageModelSheetPro
                     <Label htmlFor="isDefault">Mark as Default Color</Label>
                   </div>
 
-                  <Button 
-                    type="submit" 
-                    disabled={createCarMutation.isPending || updateCarMutation.isPending} 
-                    className="w-full"
-                  >
-                    {createCarMutation.isPending || updateCarMutation.isPending ? (
+                  <Button
+                    type="submit"
+                    disabled={
+                      createCarMutation.isPending || updateCarMutation.isPending
+                    }
+                    className="w-full">
+                    {createCarMutation.isPending ||
+                    updateCarMutation.isPending ? (
                       <>
                         <Loader className="mr-2 h-4 w-4 animate-spin" />
                         {editingCarId ? "Updating..." : "Adding..."}
                       </>
                     ) : (
                       <>
-                        {editingCarId ? <Edit className="mr-2 h-4 w-4" /> : <Plus className="mr-2 h-4 w-4" />}
+                        {editingCarId ? (
+                          <Edit className="mr-2 h-4 w-4" />
+                        ) : (
+                          <Plus className="mr-2 h-4 w-4" />
+                        )}
                         {editingCarId ? "Update Variant" : "Add Variant"}
                       </>
                     )}
@@ -315,14 +350,16 @@ export function ManageModelSheet({ model, isOpen, onClose }: ManageModelSheetPro
 
               {/* Existing Variants List */}
               <div className="space-y-4">
-                <h3 className="text-sm font-medium">Existing Variants ({cars.length})</h3>
-                
+                <h3 className="text-sm font-medium">
+                  Existing Variants ({cars.length})
+                </h3>
+
                 {carsLoading ? (
-                   <div className="space-y-2">
-                     <Skeleton className="h-12 w-full" />
-                     <Skeleton className="h-12 w-full" />
-                     <Skeleton className="h-12 w-full" />
-                   </div>
+                  <div className="space-y-2">
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-12 w-full" />
+                  </div>
                 ) : cars.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground border rounded-lg border-dashed">
                     <CarIcon className="mx-auto h-8 w-8 mb-2 opacity-50" />
@@ -345,9 +382,9 @@ export function ManageModelSheet({ model, isOpen, onClose }: ManageModelSheetPro
                             <TableCell>
                               {car.carImage ? (
                                 <div className="h-10 w-16 relative rounded overflow-hidden bg-muted">
-                                  <img 
-                                    src={car.carImage} 
-                                    alt={car.color?.name} 
+                                  <img
+                                    src={car.carImage}
+                                    alt={car.color?.name}
                                     className="object-cover w-full h-full"
                                   />
                                 </div>
@@ -361,27 +398,31 @@ export function ManageModelSheet({ model, isOpen, onClose }: ManageModelSheetPro
                               {car.color?.name || "Unknown Color"}
                             </TableCell>
                             <TableCell>
-                              {car.isDefault && <Badge variant="secondary">Default</Badge>}
+                              {car.isDefault && (
+                                <Badge variant="secondary">Default</Badge>
+                              )}
                             </TableCell>
                             <TableCell className="text-right space-x-2">
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
+                              <Button
+                                variant="ghost"
+                                size="icon"
                                 className="h-8 w-8"
-                                onClick={() => handleEdit(car)}
-                              >
+                                onClick={() => handleEdit(car)}>
                                 <Edit className="h-4 w-4" />
                               </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
+                              <Button
+                                variant="ghost"
+                                size="icon"
                                 className="h-8 w-8 text-destructive hover:text-destructive"
                                 onClick={() => {
-                                  if (confirm("Are you sure you want to delete this variant?")) {
+                                  if (
+                                    confirm(
+                                      "Are you sure you want to delete this variant?",
+                                    )
+                                  ) {
                                     deleteCarMutation.mutate(car.id);
                                   }
-                                }}
-                              >
+                                }}>
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </TableCell>
@@ -400,18 +441,26 @@ export function ManageModelSheet({ model, isOpen, onClose }: ManageModelSheetPro
               <div className="flex items-center gap-4">
                 <div className="flex-1">
                   <Label>Select Preview Alloy</Label>
-                  <Select value={selectedAlloyId} onValueChange={setSelectedAlloyId}>
+                  <Select
+                    value={selectedAlloyId}
+                    onValueChange={setSelectedAlloyId}>
                     <SelectTrigger>
                       <SelectValue placeholder="Choose an alloy to preview" />
                     </SelectTrigger>
                     <SelectContent>
                       {alloysLoading ? (
-                        <SelectItem value="loading" disabled>Loading alloys...</SelectItem>
+                        <SelectItem value="loading" disabled>
+                          Loading alloys...
+                        </SelectItem>
                       ) : alloys.length === 0 ? (
-                        <SelectItem value="none" disabled>No alloys found</SelectItem>
+                        <SelectItem value="none" disabled>
+                          No alloys found
+                        </SelectItem>
                       ) : (
                         alloys.map((alloy) => (
-                          <SelectItem key={alloy.id} value={alloy.id.toString()}>
+                          <SelectItem
+                            key={alloy.id}
+                            value={alloy.id.toString()}>
                             {alloy.alloyName}
                           </SelectItem>
                         ))
@@ -442,53 +491,81 @@ export function ManageModelSheet({ model, isOpen, onClose }: ManageModelSheetPro
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Front Wheel X</Label>
-                  <Input 
-                    type="number" 
-                    value={wheelConfig.x_front} 
-                    onChange={(e) => setWheelConfig({...wheelConfig, x_front: Number(e.target.value)})}
+                  <Input
+                    type="number"
+                    value={wheelConfig.x_front}
+                    onChange={(e) =>
+                      setWheelConfig({
+                        ...wheelConfig,
+                        x_front: Number(e.target.value),
+                      })
+                    }
                   />
                 </div>
                 <div className="space-y-2">
                   <Label>Front Wheel Y</Label>
-                  <Input 
-                    type="number" 
-                    value={wheelConfig.y_front} 
-                    onChange={(e) => setWheelConfig({...wheelConfig, y_front: Number(e.target.value)})}
+                  <Input
+                    type="number"
+                    value={wheelConfig.y_front}
+                    onChange={(e) =>
+                      setWheelConfig({
+                        ...wheelConfig,
+                        y_front: Number(e.target.value),
+                      })
+                    }
                   />
                 </div>
                 <div className="space-y-2">
                   <Label>Rear Wheel X</Label>
-                  <Input 
-                    type="number" 
-                    value={wheelConfig.x_rear} 
-                    onChange={(e) => setWheelConfig({...wheelConfig, x_rear: Number(e.target.value)})}
+                  <Input
+                    type="number"
+                    value={wheelConfig.x_rear}
+                    onChange={(e) =>
+                      setWheelConfig({
+                        ...wheelConfig,
+                        x_rear: Number(e.target.value),
+                      })
+                    }
                   />
                 </div>
                 <div className="space-y-2">
                   <Label>Rear Wheel Y</Label>
-                  <Input 
-                    type="number" 
-                    value={wheelConfig.y_rear} 
-                    onChange={(e) => setWheelConfig({...wheelConfig, y_rear: Number(e.target.value)})}
+                  <Input
+                    type="number"
+                    value={wheelConfig.y_rear}
+                    onChange={(e) =>
+                      setWheelConfig({
+                        ...wheelConfig,
+                        y_rear: Number(e.target.value),
+                      })
+                    }
                   />
                 </div>
                 <div className="col-span-2 space-y-2">
                   <Label>Wheel Size (Pixels)</Label>
-                  <Input 
-                    type="number" 
-                    value={wheelConfig.wheelSize} 
-                    onChange={(e) => setWheelConfig({...wheelConfig, wheelSize: Number(e.target.value)})}
+                  <Input
+                    type="number"
+                    value={wheelConfig.wheelSize}
+                    onChange={(e) =>
+                      setWheelConfig({
+                        ...wheelConfig,
+                        wheelSize: Number(e.target.value),
+                      })
+                    }
                   />
-                  <p className="text-xs text-muted-foreground">Adjust this to match the wheel scale relative to the car.</p>
+                  <p className="text-xs text-muted-foreground">
+                    Adjust this to match the wheel scale relative to the car.
+                  </p>
                 </div>
               </div>
 
-              <Button 
-                onClick={handleSaveWheelConfig} 
-                disabled={updateModelMutation.isPending} 
-                className="w-full"
-              >
-                {updateModelMutation.isPending ? "Saving..." : "Save Wheel Configuration"}
+              <Button
+                onClick={handleSaveWheelConfig}
+                disabled={updateModelMutation.isPending}
+                className="w-full">
+                {updateModelMutation.isPending
+                  ? "Saving..."
+                  : "Save Wheel Configuration"}
               </Button>
             </div>
           </TabsContent>
