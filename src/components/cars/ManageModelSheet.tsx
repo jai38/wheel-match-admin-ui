@@ -107,12 +107,24 @@ export function ManageModelSheet({
   const cars = carsData?.items || [];
 
   // Fetch Alloys for preview
-  const { data: alloysData, isLoading: alloysLoading } = useAlloys({
+  // 1. Fetch alloys specific to this model that have images
+  const { data: specificAlloysData, isLoading: specificAlloysLoading } = useAlloys({
+    modelId: model?.id,
+    hasImage: true,
     limit: 100,
   });
 
-  // Robustly get alloys array from paginated response
-  const alloys = alloysData?.items || alloysData?.alloys || [];
+  // 2. Fallback: Fetch default alloys (first 10 with images) to ensure preview is never empty
+  const { data: defaultAlloysData, isLoading: defaultAlloysLoading } = useAlloys({
+    limit: 10,
+    hasImage: true,
+  });
+
+  const specificAlloys = specificAlloysData?.items || specificAlloysData?.alloys || [];
+  const defaultAlloys = defaultAlloysData?.items || defaultAlloysData?.alloys || [];
+
+  const alloys = specificAlloys.length > 0 ? specificAlloys : defaultAlloys;
+  const alloysLoading = specificAlloysLoading || (specificAlloys.length === 0 && defaultAlloysLoading);
 
   const selectedAlloy =
     alloys.find((a) => a.id.toString() === selectedAlloyId) || alloys[0];

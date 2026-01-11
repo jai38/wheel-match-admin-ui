@@ -213,6 +213,8 @@ export interface AlloyFilterParams extends PaginationParams {
   sizeId?: number;
   diameter?: number;
   isActive?: boolean;
+  modelId?: number;
+  hasImage?: boolean;
 }
 
 // Dashboard Stats (to be implemented in backend later)
