@@ -165,29 +165,6 @@ export const carsService = {
   },
 
   /**
-   * Get ALL cars (handling pagination internally)
-   */
-  async getAllCars(): Promise<Car[]> {
-    const limit = 1000;
-    let page = 1;
-    let allCars: Car[] = [];
-    let hasMore = true;
-
-    while (hasMore) {
-      const response = await this.getCars({ page, limit });
-      const items = response.items || [];
-      allCars = [...allCars, ...items];
-
-      if (page >= response.pagination.totalPages) {
-        hasMore = false;
-      } else {
-        page++;
-      }
-    }
-    return allCars;
-  },
-
-  /**
    * Get single car by ID
    */
   async getCar(id: number): Promise<Car> {

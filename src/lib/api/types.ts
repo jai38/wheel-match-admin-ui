@@ -135,6 +135,7 @@ export interface CarFilterParams extends PaginationParams {
   modelId?: number;
   colorId?: number;
   isActive?: boolean;
+  pagination?: boolean;
 }
 
 // Alloy Master Data Types
