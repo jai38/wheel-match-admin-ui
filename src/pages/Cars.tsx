@@ -41,34 +41,40 @@ export default function Cars() {
   const handleExport = async () => {
     try {
       setIsExporting(true);
-      const response = await carsService.getCars({ pagination: false });
-      const cars = response.items || [];
+      // Fetch both cars and models to ensure we get models without variants too
+      const [carsResponse, modelsResponse] = await Promise.all([
+        carsService.getCars({ pagination: false }),
+        carsService.getModels({ pagination: false }),
+      ]);
 
-      // Group by Model ID
-      const grouped = cars.reduce((acc, car) => {
-        const modelId = car.modelId;
-        if (!acc[modelId]) {
-          acc[modelId] = {
-            make: car.model?.make?.name || "",
-            model: car.model?.name || "",
-            name: `${car.model?.make?.name || ""} ${
-              car.model?.name || ""
-            }`.trim(),
-            colors: new Set<string>(),
-          };
+      const cars = carsResponse.items || [];
+      const models = modelsResponse.items || [];
+
+      // Group cars by Model ID to get colors
+      const carsByModelId = cars.reduce((acc, car) => {
+        if (!acc[car.modelId]) {
+          acc[car.modelId] = new Set<string>();
         }
         if (car.color?.name) {
-          acc[modelId].colors.add(car.color.name);
+          acc[car.modelId].add(car.color.name);
         }
         return acc;
-      }, {} as Record<number, { make: string; model: string; name: string; colors: Set<string> }>);
+      }, {} as Record<number, Set<string>>);
 
-      const csvData = Object.values(grouped).map((item) => ({
-        Make: item.make,
-        Model: item.model,
-        Name: item.name,
-        Colors: Array.from(item.colors).join(", "),
-      }));
+      // Generate CSV data from Models list
+      const csvData = models.map((model) => {
+        const colors = carsByModelId[model.id]
+          ? Array.from(carsByModelId[model.id]).join(", ")
+          : "";
+        
+        return {
+          Make: model.make?.name || "",
+          Model: model.name,
+          Name: `${model.make?.name || ""} ${model.name}`.trim(),
+          Colors: colors,
+          Status: model.isActive ? "Active" : "Inactive",
+        };
+      });
 
       downloadCSV(csvData, "cars_export.csv");
     } catch (error) {
