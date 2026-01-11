@@ -3,6 +3,7 @@ import apiClient from "../client";
 export interface DashboardStats {
   cars: {
     total: number;
+    totalModels: number;
     active: number;
   };
   alloys: {

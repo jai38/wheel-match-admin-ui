@@ -15,10 +15,11 @@ import { useDashboardStats } from "@/hooks/useDashboard";
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  
+
   // Fetch dashboard stats from dedicated API
   const { data: stats, isLoading } = useDashboardStats();
 
+  const totalModels = stats?.cars.totalModels ?? 0;
   const totalCars = stats?.cars.total ?? 0;
   const totalAlloys = stats?.alloys.total ?? 0;
   const activeCars = stats?.cars.active ?? 0;
@@ -35,12 +36,23 @@ export default function Dashboard() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {isLoading ? (
             <Skeleton className="h-32 rounded-lg" />
           ) : (
             <StatsCard
-              title="Total Cars"
+              title="Total Models"
+              value={totalModels.toString()}
+              icon={Car}
+              trend=""
+              trendUp={true}
+            />
+          )}
+          {isLoading ? (
+            <Skeleton className="h-32 rounded-lg" />
+          ) : (
+            <StatsCard
+              title="Total Variants"
               value={totalCars.toString()}
               icon={Car}
               trend=""
@@ -62,7 +74,7 @@ export default function Dashboard() {
             <Skeleton className="h-32 rounded-lg" />
           ) : (
             <StatsCard
-              title="Active Cars"
+              title="Active Variants"
               value={activeCars.toString()}
               icon={Package}
               trend=""
