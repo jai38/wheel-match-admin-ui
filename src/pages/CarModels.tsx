@@ -62,8 +62,7 @@ export default function CarModels() {
   const handleExport = async () => {
     try {
       setIsExporting(true);
-      const response = await carsService.getCars({ limit: 1000 });
-      const cars = response.items || [];
+      const cars = await carsService.getAllCars();
 
       // Group by Model ID
       const grouped = cars.reduce((acc, car) => {
