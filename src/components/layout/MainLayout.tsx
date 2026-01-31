@@ -39,7 +39,7 @@ export function MainLayout({ children }: MainLayoutProps) {
             {children}
           </div>
           <footer className="border-t border-border/40 py-6 px-6 md:px-8 mt-auto bg-card/30 backdrop-blur-sm">
-            <div className="flex flex-col sm:flex-row justify-between items-center text-xs text-muted-foreground gap-2">
+            <div className="flex flex-col sm:flex-row justify-between items-center text-[10px] text-muted-foreground gap-2">
               <p>&copy; {new Date().getFullYear()} Neo Wheels. All rights reserved.</p>
               <p>Admin Portal v1.0</p>
             </div>

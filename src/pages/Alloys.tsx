@@ -10,6 +10,7 @@ import {
   ImageIcon,
   Download,
   Upload,
+  RefreshCw,
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { MainLayout } from "@/components/layout/MainLayout";
@@ -26,18 +27,22 @@ import {
 import { useAlloys, useDeleteAlloy, useUpdateAlloy } from "@/hooks/useAlloys";
 import { CarListModal } from "@/components/CarListModal";
 import { BulkMappingDialog } from "@/components/BulkMappingDialog";
+import { BulkStatusDialog } from "@/components/BulkStatusDialog";
 import { alloysService } from "@/lib/api";
 import { downloadCSV } from "@/lib/exportUtils";
 import type { Alloy } from "@/lib/api";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function Alloys() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
   const limit = 10;
   const [selectedAlloyId, setSelectedAlloyId] = useState<number | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false);
+  const [isBulkStatusDialogOpen, setIsBulkStatusDialogOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
   const { data, isLoading, error } = useAlloys({
@@ -125,6 +130,12 @@ export default function Alloys() {
               onClick={() => setIsBulkDialogOpen(true)}>
               <Upload className="h-4 w-4 mr-2" />
               Bulk Map
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setIsBulkStatusDialogOpen(true)}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Bulk Status
             </Button>
             <Button onClick={() => navigate("/alloys/new")}>
               <Plus className="h-4 w-4 mr-2" />
@@ -273,6 +284,13 @@ export default function Alloys() {
       <BulkMappingDialog 
         open={isBulkDialogOpen} 
         onOpenChange={setIsBulkDialogOpen} 
+      />
+      <BulkStatusDialog
+        open={isBulkStatusDialogOpen}
+        onOpenChange={setIsBulkStatusDialogOpen}
+        onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ["alloys"] });
+        }}
       />
     </MainLayout>
   );

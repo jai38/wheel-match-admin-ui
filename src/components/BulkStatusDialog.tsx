@@ -5,14 +5,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { bulkService } from "@/lib/api";
-import { Loader, Upload, Download, FileSpreadsheet, CheckCircle, AlertTriangle } from "lucide-react";
+import { Loader, Upload, CheckCircle, AlertTriangle, FileSpreadsheet } from "lucide-react";
 
-interface BulkMappingDialogProps {
+interface BulkStatusDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
+    onSuccess?: () => void;
 }
 
-export function BulkMappingDialog({ open, onOpenChange }: BulkMappingDialogProps) {
+export function BulkStatusDialog({ open, onOpenChange, onSuccess }: BulkStatusDialogProps) {
     const [file, setFile] = useState<File | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [result, setResult] = useState<any>(null);
@@ -26,23 +27,6 @@ export function BulkMappingDialog({ open, onOpenChange }: BulkMappingDialogProps
         }
     };
 
-    const handleDownloadTemplate = async () => {
-        try {
-            const blob = await bulkService.downloadTemplate();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'Mapping_Template.xlsx';
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-        } catch (e) {
-            console.error(e);
-            setError("Failed to download template");
-        }
-    };
-
     const handleUpload = async () => {
         if (!file) return;
 
@@ -51,13 +35,15 @@ export function BulkMappingDialog({ open, onOpenChange }: BulkMappingDialogProps
         setResult(null);
 
         try {
-            const res = await bulkService.uploadMapping(file);
+            const res = await bulkService.uploadStatusUpdate(file);
             setResult(res.data);
             setFile(null); // Clear file selection
-            // Reset input value if possible, but state null is enough for logic
+            if (onSuccess) {
+                onSuccess();
+            }
         } catch (e: any) {
             console.error(e);
-            setError(e.message || "Failed to upload mapping");
+            setError(e.response?.data?.message || e.message || "Failed to upload status update");
         } finally {
             setIsLoading(false);
         }
@@ -67,37 +53,37 @@ export function BulkMappingDialog({ open, onOpenChange }: BulkMappingDialogProps
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>Bulk Map Cars to Alloys</DialogTitle>
+                    <DialogTitle>Bulk Update Alloy Status</DialogTitle>
                     <DialogDescription>
-                        Upload a CSV or Excel file to map multiple cars to alloys at once.
+                        Upload a CSV file to update alloy statuses. 
+                        Use the "Export CSV" file as a template. 
+                        Ensure columns "Name" (or "Alloy Name") and "Status" are present.
+                        Status should be "Active" or "Inactive".
                     </DialogDescription>
                 </DialogHeader>
 
                 <div className="grid gap-6 py-4">
-                    {/* Step 1: Template */}
-                    <div className="space-y-2 border p-4 rounded-md bg-muted/20">
+                     <div className="space-y-2 border p-4 rounded-md bg-muted/20">
                         <h3 className="font-medium flex items-center gap-2">
-                            <FileSpreadsheet className="h-4 w-4" /> 1. Get Template
+                            <FileSpreadsheet className="h-4 w-4" /> Instructions
                         </h3>
                         <p className="text-sm text-muted-foreground">
-                            Download the template file, fill in the Alloy Name, Car Make, and Car Model.
+                            1. Export your alloys using "Export CSV".<br/>
+                            2. Edit the "Status" column to "Active" or "Inactive".<br/>
+                            3. Upload the CSV file below.
                         </p>
-                        <Button variant="outline" size="sm" onClick={handleDownloadTemplate}>
-                            <Download className="mr-2 h-4 w-4" /> Download Template
-                        </Button>
                     </div>
 
-                    {/* Step 2: Upload */}
                     <div className="space-y-2 border p-4 rounded-md">
                         <h3 className="font-medium flex items-center gap-2">
-                            <Upload className="h-4 w-4" /> 2. Upload Mapping
+                            <Upload className="h-4 w-4" /> Upload File
                         </h3>
                         <div className="grid w-full max-w-sm items-center gap-1.5">
-                            <Label htmlFor="excel-upload">CSV or Excel File</Label>
+                            <Label htmlFor="status-upload">CSV File</Label>
                             <Input 
-                                id="excel-upload" 
+                                id="status-upload" 
                                 type="file" 
-                                accept=".csv, .xlsx, .xls" 
+                                accept=".csv" 
                                 onChange={handleFileChange} 
                             />
                         </div>
@@ -148,7 +134,7 @@ export function BulkMappingDialog({ open, onOpenChange }: BulkMappingDialogProps
                                 <Loader className="mr-2 h-4 w-4 animate-spin" /> Processing...
                             </>
                         ) : (
-                            "Upload & Process"
+                            "Update Statuses"
                         )}
                     </Button>
                 </DialogFooter>

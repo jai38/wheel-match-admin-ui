@@ -19,4 +19,16 @@ export const bulkService = {
     });
     return response.data;
   },
+
+  uploadStatusUpdate: async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await apiClient.post<{ status: string; data: any }>('/admin/bulk/status-update', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
 };
