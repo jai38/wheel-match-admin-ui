@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Edit, Trash2, Loader, Settings, Download } from "lucide-react";
+import { Plus, Edit, Trash2, Loader, Settings, Download, Upload } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { downloadCSV } from "@/lib/exportUtils";
@@ -40,11 +40,13 @@ import {
   useUpdateCarModel,
   useDeleteCarModel,
 } from "@/hooks/useCars";
+import { BulkCarImportDialog } from "@/components/BulkCarImportDialog";
 
 const STORAGE_KEY_MAKE = "carMaster_selectedMake";
 
 export default function CarModels() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
   const [editingModelId, setEditingModelId] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     name: "",
@@ -65,32 +67,15 @@ export default function CarModels() {
       const response = await carsService.getCars({ pagination: false });
       const cars = response.items || [];
 
-      // Group by Model ID
-      const grouped = cars.reduce((acc, car) => {
-        const modelId = car.modelId;
-        if (!acc[modelId]) {
-          acc[modelId] = {
-            make: car.model?.make?.name || '',
-            model: car.model?.name || '',
-            name: `${car.model?.make?.name || ''} ${car.model?.name || ''}`.trim(),
-            defaultAlloySize: car.model?.defaultAlloySize ? `${car.model.defaultAlloySize}"` : '',
-            status: car.model?.isActive ? 'Active' : 'Inactive',
-            colors: new Set<string>()
-          };
-        }
-        if (car.color?.name) {
-          acc[modelId].colors.add(car.color.name);
-        }
-        return acc;
-      }, {} as Record<number, { make: string, model: string, name: string, defaultAlloySize: string, status: string, colors: Set<string> }>);
-
-      const csvData = Object.values(grouped).map(item => ({
-        Make: item.make,
-        Model: item.model,
-        Name: item.name,
-        'Default Alloy Size': item.defaultAlloySize,
-        Status: item.status,
-        Colors: Array.from(item.colors).join(', ')
+      // Flatten cars to rows
+      const csvData = cars.map(car => ({
+        Make: car.model?.make?.name || '',
+        Model: car.model?.name || '',
+        Color: car.color?.name || '',
+        'Color Code': car.color?.colorCode || '',
+        Status: car.isActive ? 'Active' : 'Inactive',
+        'Is Default': car.isDefault ? 'Yes' : 'No',
+        'Image URL': car.carImage || ''
       }));
 
       downloadCSV(csvData, 'cars_export.csv');
@@ -240,6 +225,12 @@ export default function CarModels() {
             </p>
           </div>
           <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsBulkImportOpen(true)}>
+              <Upload className="h-4 w-4 mr-2" />
+              Bulk Import
+            </Button>
             <Button
               variant="outline"
               onClick={handleExport}
@@ -506,6 +497,11 @@ export default function CarModels() {
           model={selectedModel}
           isOpen={!!selectedModel}
           onClose={() => setSelectedModel(null)}
+        />
+
+        <BulkCarImportDialog 
+          open={isBulkImportOpen} 
+          onOpenChange={setIsBulkImportOpen} 
         />
       </div>
     </MainLayout>

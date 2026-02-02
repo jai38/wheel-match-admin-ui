@@ -31,4 +31,16 @@ export const bulkService = {
     });
     return response.data;
   },
+
+  uploadCarImport: async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await apiClient.post<{ status: string; data: any }>('/admin/bulk/import-cars', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
 };
