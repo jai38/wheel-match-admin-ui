@@ -5,6 +5,7 @@ import { Separator } from "@/components/ui/separator";
 import { useProfile, useLogout } from "@/hooks/useAuth";
 import { useState } from "react";
 import logo from "@/assets/logo-black-text.png";
+import zettaLogo from "@/assets/zetta-logo-black.png";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -52,13 +53,16 @@ export function Sidebar({ className }: SidebarProps) {
     );
   };
 
+  const logoSrc = user?.tenantId === "ZETTA" ? zettaLogo : logo;
+  const logoAlt = user?.tenantId === "ZETTA" ? "Zetta Wheels" : "Neo Wheels";
+
   return (
     <div className={cn("flex h-screen w-64 flex-col bg-sidebar text-sidebar-foreground", className)}>
       {/* Logo */}
       <div className="flex h-16 items-center px-6">
         <img 
-          src={logo} 
-          alt="Neo Wheels" 
+          src={logoSrc} 
+          alt={logoAlt} 
           className="h-8 w-auto object-contain"
         />
       </div>

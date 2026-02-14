@@ -56,6 +56,7 @@ export interface User {
   name: string;
   email: string;
   role: string;
+  tenantId: string;
   isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
